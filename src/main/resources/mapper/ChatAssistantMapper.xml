@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shujichen.rag.mapper.ChatAssistantMapper">
+
+    <resultMap id="BaseResultMap" type="com.shujichen.rag.entity.ChatAssistant">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="assistantAvatar" column="assistant_avatar" jdbcType="VARCHAR"/>
+            <result property="assistantName" column="assistant_name" jdbcType="VARCHAR"/>
+            <result property="assistantDescription" column="assistant_description" jdbcType="VARCHAR"/>
+            <result property="emptyReply" column="empty_reply" jdbcType="VARCHAR"/>
+            <result property="openingStatement" column="opening_statement" jdbcType="VARCHAR"/>
+            <result property="knowledgeBaseId" column="knowledge_base_id" jdbcType="VARCHAR"/>
+            <result property="systemPrompt" column="system_prompt" jdbcType="VARCHAR"/>
+            <result property="topP" column="top_p" jdbcType="INTEGER"/>
+            <result property="enableReasoningMode" column="enable_reasoning_mode" jdbcType="TINYINT"/>
+            <result property="modelId" column="model_id" jdbcType="VARCHAR"/>
+            <result property="temperature" column="temperature" jdbcType="DECIMAL"/>
+            <result property="presencePenalty" column="presence_penalty" jdbcType="DECIMAL"/>
+            <result property="frequencyPenalty" column="frequency_penalty" jdbcType="DECIMAL"/>
+            <result property="maxTokens" column="max_tokens" jdbcType="INTEGER"/>
+            <result property="createdTime" column="created_time" jdbcType="TIMESTAMP"/>
+            <result property="updatedTime" column="updated_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,assistant_avatar,assistant_name,
+        assistant_description,empty_reply,opening_statement,
+        knowledge_base_id,system_prompt,top_p,
+        enable_reasoning_mode,model_id,temperature,
+        presence_penalty,frequency_penalty,max_tokens,
+        created_time,updated_time
+    </sql>
+</mapper>

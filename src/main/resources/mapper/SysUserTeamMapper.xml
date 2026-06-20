@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shujichen.rag.mapper.SysUserTeamMapper">
+
+    <resultMap id="BaseResultMap" type="com.shujichen.rag.entity.SysUserTeam">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="userId" column="user_id" jdbcType="BIGINT"/>
+        <result property="teamId" column="team_id" jdbcType="BIGINT"/>
+        <result property="createAt" column="create_at" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,user_id,team_id,
+        create_at
+    </sql>
+    <select id="selectJoinTeam" resultType="com.shujichen.rag.common.vo.user.SysUserTeamVo">
+        SELECT su.username   as username,
+               su.email      as email,
+               su.`status`   as status,
+               sut.create_at as createAt,
+               sut.team_id   as teamId,
+               sut.user_id   as userId
+        FROM `sys_user_team` sut
+                 LEFT JOIN sys_user su
+                           ON sut.team_id = su.id
+        where sut.user_id = #{userId}
+    </select>
+    <select id="selectTeamUser" resultType="com.shujichen.rag.common.vo.user.SysUserTeamVo">
+        SELECT su.username   as username,
+               su.email      as email,
+               su.`status`   as status,
+               sut.create_at as createAt,
+               sut.team_id   as teamId,
+               sut.user_id   as userId
+        FROM `sys_user_team` sut
+                 LEFT JOIN sys_user su
+                           ON sut.user_id = su.id
+        where sut.team_id = #{userId}
+          and user_id != #{userId}
+    </select>
+    <select id="selectJoinTeamIdList" resultType="java.lang.Long">
+        SELECT team_id
+        FROM `sys_user_team`
+        where user_id = #{userId}
+    </select>
+</mapper>
