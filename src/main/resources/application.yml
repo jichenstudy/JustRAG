@@ -82,3 +82,52 @@ mybatis-plus:
     map-underscore-to-camel-case: true
     cache-enabled: false
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 向量库配置
+vector-store:
+  # 切换向量库时只需修改此值，系统会自动使用对应类型的配置
+  # 向量存储类型 可选(milvus/postgresql/elasticsearch)
+  type: milvus
+  # Embedding API 单次批量大小，可根据提供商调整此值
+  embedding-batch-size: 8
+  # Milvus配置
+  # 适用场景：大规模向量检索（百万级以上），性能优秀
+  milvus:
+    host: localhost
+    port: 19530
+    # 注意：自定义名称需要提前创建数据库，否则会自动使用 default
+    database-name: default
+    username:
+    password:
+  # PostgreSQL配置
+  # 适用场景：中小规模向量检索（十万级）
+  # 前置要求：PostgreSQL 必须安装 pgvector 扩展
+  # 安装命令：CREATE EXTENSION vector;
+  postgresql:
+    host: localhost
+    port: 5432
+    database: just_rag
+    username: postgres
+    password: postgres
+    # 建议：开发环境用 public，生产环境可创建独立 schema 隔离
+    schema: public
+    # 向量表名称默认值，实际表名由系统动态生成，"kb_{uuid}"
+    table: vector_store
+    # 批量写入的最大文档数
+    # 建议：100-1000 之间，根据实际内存调整
+    max-document-size: 100
+  # Elasticsearch配置
+  # 适用场景：全文检索 + 向量检索混合场景，支持复杂的过滤和聚合
+  # 前置要求：Elasticsearch 8.0+（支持 dense_vector 字段类型）
+  elasticsearch:
+    # Elasticsearch 集群地址（支持多个节点，逗号分隔）
+    # 注意：必须包含协议（http:// 或 https://）
+    hosts: http://localhost:9200
+    # 索引名称默认值，实际索引由系统动态生成，"kb_{uuid}"
+    index-name: vector_store
+    username: elastic
+    password: elastic
+    # Elasticsearch API Key（与账号密码二选一）
+    api-key:
+    # 是否启用 SSL/TLS 加密
+    ssl-enabled: false

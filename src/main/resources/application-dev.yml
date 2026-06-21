@@ -65,13 +65,6 @@ spring:
         toolcallback:
           enabled: true
 
-# 向量库配置
-milvus:
-  client:
-    host: localhost
-    port: 19530
-  databaseName: default
-
 # MinIO配置
 minio:
   endpoint: http://localhost:9000

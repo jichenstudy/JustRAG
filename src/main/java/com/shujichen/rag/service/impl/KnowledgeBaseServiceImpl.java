@@ -4,7 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.shujichen.rag.entity.KnowledgeBase;
-import com.shujichen.rag.factory.RagVectorStoreManager;
+import com.shujichen.rag.factory.VectorStoreStrategyFactory;
 import com.shujichen.rag.mapper.KnowledgeBaseMapper;
 import com.shujichen.rag.mapper.SysUserTeamMapper;
 import com.shujichen.rag.service.KnowledgeBaseService;
@@ -24,7 +24,7 @@ import java.util.List;
 public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
     private final KnowledgeBaseMapper knowledgeBaseMapper;
-    private final RagVectorStoreManager ragVectorStoreManager;
+    private final VectorStoreStrategyFactory vectorStoreStrategyFactory;
     private final SysUserTeamMapper sysUserTeamMapper;
 
     @Override
@@ -41,7 +41,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
         // 创建新集合
         String collectionName = "kb_" + IdUtil.fastSimpleUUID();
-        VectorStore orCreateVectorStore = ragVectorStoreManager.getOrCreateVectorStore(modelId, collectionName);
+        VectorStore orCreateVectorStore = vectorStoreStrategyFactory.getStrategy().getOrCreateVectorStore(modelId, collectionName);
         if (orCreateVectorStore == null) {
             throw new IllegalArgumentException("创建集合失败");
         }
@@ -134,12 +134,12 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             throw new IllegalArgumentException("知识库不存在,ID: " + id);
         }
 
-        // 删除 Milvus collection
+        // 删除向量库 collection
         String collectionName = knowledgeBase.getCollectionsName();
         if (collectionName != null && !collectionName.isBlank()) {
-            boolean dropped = ragVectorStoreManager.dropCollection(collectionName);
+            boolean dropped = vectorStoreStrategyFactory.getStrategy().dropCollection(collectionName);
             if (!dropped) {
-                log.warn("删除 Milvus collection 失败，但继续删除知识库记录，collection: {}", collectionName);
+                log.warn("删除向量库 collection 失败，但继续删除知识库记录，collection: {}", collectionName);
             }
         }
 

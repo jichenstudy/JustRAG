@@ -9,7 +9,7 @@ import com.shujichen.rag.entity.ChatMessage;
 import com.shujichen.rag.entity.ChatSession;
 import com.shujichen.rag.entity.KnowledgeBase;
 import com.shujichen.rag.factory.ChatClientFactory;
-import com.shujichen.rag.factory.RagVectorStoreManager;
+import com.shujichen.rag.factory.VectorStoreStrategyFactory;
 import com.shujichen.rag.mapper.ChatMessageMapper;
 import com.shujichen.rag.mapper.ChatSessionMapper;
 import com.shujichen.rag.mapper.KnowledgeBaseMapper;
@@ -44,7 +44,7 @@ public class ChatServiceImpl implements ChatService {
     private final AiModelConfigService aiModelConfigService;
     private final ChatAssistantService chatAssistantService;
     private final ChatClientFactory chatClientFactory;
-    private final RagVectorStoreManager ragVectorStoreFactory;
+    private final VectorStoreStrategyFactory vectorStoreStrategyFactory;
     private final ChatMemory chatMemory;  // 自定义的 DatabaseChatMemory
 
     private static final String RAG_SYSTEM_PROMPT = """
@@ -356,7 +356,7 @@ public class ChatServiceImpl implements ChatService {
             }
 
             // 获取知识库对应的 VectorStore（包含对应的嵌入模型和collection）
-            VectorStore vectorStore = ragVectorStoreFactory.getVectorStore(knowledgeBase);
+            VectorStore vectorStore = vectorStoreStrategyFactory.getStrategy().getVectorStore(knowledgeBase);
             if (vectorStore == null) {
                 log.warn("VectorStore 不可用，collection: {}，将使用普通聊天模式",
                         knowledgeBase.getCollectionsName());

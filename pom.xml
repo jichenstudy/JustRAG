@@ -33,6 +33,7 @@
         <dashscope.version>1.0.0.2</dashscope.version>
         <mcp-bom.version>0.17.0</mcp-bom.version>
         <spring-ai-bom.version>1.0.0</spring-ai-bom.version>
+        <elasticsearch-java.version>8.15.3</elasticsearch-java.version>
     </properties>
 
     <profiles>
@@ -161,6 +162,32 @@
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-milvus-store</artifactId>
+        </dependency>
+
+        <!-- PostgreSQL pgvector Vector Store -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-pgvector-store</artifactId>
+        </dependency>
+
+        <!-- Elasticsearch Vector Store -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-elasticsearch-store</artifactId>
+        </dependency>
+
+        <!-- Elasticsearch Java Client -->
+        <dependency>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
+            <version>${elasticsearch-java.version}</version>
+        </dependency>
+
+        <!-- PostgreSQL JDBC Driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Document Parsing - Apache POI -->

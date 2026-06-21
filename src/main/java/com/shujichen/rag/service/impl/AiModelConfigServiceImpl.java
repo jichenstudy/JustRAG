@@ -81,11 +81,12 @@ public class AiModelConfigServiceImpl extends ServiceImpl<AiModelConfigMapper, A
 
         aiModelConfigMapper.updateById(existingConfig);
 
-        // 清除该模型的 VectorStore 缓存（因为嵌入模型可能已改变） TODO 需要查看当前模型是否已被数据库绑定
-//        RagVectorStoreManager factory = ragVectorStoreFactoryProvider.getIfAvailable();
-//        if (factory != null) {
-//            factory.invalidateCache(id);
-//        }
+        // 清除该模型的 VectorStore 缓存（因为嵌入模型可能已改变）
+        // TODO: 需要查看当前模型是否已被数据库绑定
+        // VectorStoreStrategyFactory factory = vectorStoreStrategyFactoryProvider.getIfAvailable();
+        // if (factory != null) {
+        //     factory.getStrategy().clearCache();
+        // }
 
         log.info("更新模型配置成功, ID: {}", id);
     }
@@ -100,11 +101,12 @@ public class AiModelConfigServiceImpl extends ServiceImpl<AiModelConfigMapper, A
 
         aiModelConfigMapper.deleteById(id);
 
-        // 清除该模型的 VectorStore 缓存 TODO 需要查看当前模型是否已被数据库绑定
-//        RagVectorStoreManager factory = ragVectorStoreFactoryProvider.getIfAvailable();
-//        if (factory != null) {
-//            factory.invalidateCache(id);
-//        }
+        // 清除该模型的 VectorStore 缓存
+        // TODO: 需要查看当前模型是否已被数据库绑定
+        // VectorStoreStrategyFactory factory = vectorStoreStrategyFactoryProvider.getIfAvailable();
+        // if (factory != null) {
+        //     factory.getStrategy().clearCache();
+        // }
 
         log.info("删除模型配置成功, ID: {}", id);
     }
