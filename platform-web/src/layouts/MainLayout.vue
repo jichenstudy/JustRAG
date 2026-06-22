@@ -97,7 +97,7 @@ const navItems = [
   { name: '聊天', path: '/chat', icon: ChatbubbleEllipsesOutline },
   { name: '搜索', path: '/search', icon: SearchOutline },
   { name: '知识库', path: '/knowledge', icon: LibraryOutline },
-  // { name: '文件管理', path: '/files', icon: FolderOpenOutline },
+  { name: '文件管理', path: '/files', icon: FolderOpenOutline },
   { name: '模型配置', path: '/model', icon: SettingsOutline },
   { name: 'MCP配置', path: '/mcp', icon: ExtensionPuzzleOutline },
   { name: '团队管理', path: '/team', icon: PeopleOutline }

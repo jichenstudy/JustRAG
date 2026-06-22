@@ -40,7 +40,7 @@ public class CreateChatAssistantDTO {
     /**
      * 关联知识库ID
      */
-    private String knowledgeBaseId;
+    private Long knowledgeBaseId;
 
     /**
      * 系统提示词（指导AI行为的指令）
@@ -73,9 +73,9 @@ public class CreateChatAssistantDTO {
     private Integer enableReasoningMode;
 
     /**
-     * 关联模型（AI模型名称）
+     * 关联模型ID
      */
-    private String modelId;
+    private Long modelId;
 
     /**
      * 温度参数（控制随机性，0-2，默认0.8）

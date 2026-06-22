@@ -2,6 +2,7 @@ package com.shujichen.rag.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.shujichen.rag.common.vo.file.FileDetailVO;
 import com.shujichen.rag.common.vo.file.FileInfoVO;
 import com.shujichen.rag.entity.FileDetail;
 
@@ -15,14 +16,22 @@ public interface FileDetailService extends IService<FileDetail> {
     /**
      * 查询文件记录表分页列表
      *
-     * @param page        页码
-     * @param pageSize    每页数量
-     * @param filename    文件名
-     * @param hashInfo    哈希信息
+     * @param page         页码
+     * @param pageSize     每页数量
+     * @param filename     文件名
+     * @param hashInfo     哈希信息
      * @param uploadStatus 上传状态
      * @return 分页数据
      */
-    IPage<FileDetail> selectPage(Integer page, Integer pageSize, String filename, String hashInfo, Integer uploadStatus);
+    IPage<FileDetailVO> selectPage(Integer page, Integer pageSize, String filename, String hashInfo, Integer uploadStatus);
+
+    /**
+     * 根据ID查询文件详情
+     *
+     * @param id 文件ID
+     * @return 文件详情VO
+     */
+    FileDetailVO getFileDetailVO(Long id);
 
     /**
      * 新增文件记录表

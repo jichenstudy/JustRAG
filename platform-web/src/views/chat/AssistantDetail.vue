@@ -511,7 +511,7 @@ const settingsForm = ref({
   topP: null as number | null,
   topN: null as number | null,
   enableReasoningMode: null as number | null,
-  modelId: null as number | null,
+  modelId: null as string | null,
   temperature: null as number | null,
   presencePenalty: null as number | null,
   frequencyPenalty: null as number | null,
@@ -618,7 +618,7 @@ const loadMessages = async (sessionId: string) => {
     const openingMessage = assistant.value?.openingStatement || '你好！ 我是你的助理，有什么可以帮到你的吗？'
     messages.value = [
       {
-        id: -(Date.now()),
+        id: String(-(Date.now())),
         sessionId: sessionId,
         role: 'ASSISTANT',
         content: openingMessage,
@@ -647,7 +647,7 @@ const loadMessages = async (sessionId: string) => {
       const openingMessage = assistant.value?.openingStatement || '你好！ 我是你的助理，有什么可以帮到你的吗？'
       messages.value = [
         {
-          id: -(Date.now()),
+          id: String(-(Date.now())),
           sessionId: sessionId,
           role: 'ASSISTANT',
           content: openingMessage,
@@ -852,7 +852,7 @@ const handleSend = async () => {
 
   // 立即添加用户消息到界面
   const userMessage: ChatMessage = {
-    id: Date.now(),
+    id: String(Date.now()),
     sessionId: currentSessionId.value!,
     role: 'USER',
     content: content,
@@ -863,7 +863,7 @@ const handleSend = async () => {
 
   // 创建临时的助手消息对象
   const assistantMessage: ChatMessage & { streaming?: boolean } = {
-    id: Date.now() + 1,
+    id: String(Date.now() + 1),
     sessionId: currentSessionId.value!,
     role: 'ASSISTANT',
     content: '',

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shujichen.rag.mapper.FileDetailMapper">
+
+    <select id="selectPageWithKnowledgeBaseName" resultType="com.shujichen.rag.common.vo.file.FileDetailVO">
+        SELECT fd.id, fd.url, fd.size, fd.filename, fd.original_filename,
+               fd.bucket_name, fd.object_name, fd.base_path, fd.path,
+               fd.ext, fd.content_type, fd.platform, fd.hash_info,
+               fd.upload_id, fd.upload_status, fd.user_id,
+               fd.knowledge_base_id, fd.create_time,
+               kb.name AS knowledge_base_name
+        FROM file_detail fd
+                 LEFT JOIN knowledge_base kb ON fd.knowledge_base_id = kb.id
+        <where>
+            <if test="filename != null and filename != ''">
+                AND fd.original_filename LIKE CONCAT('%', #{filename}, '%')
+            </if>
+            <if test="hashInfo != null and hashInfo != ''">
+                AND fd.hash_info = #{hashInfo}
+            </if>
+            <if test="uploadStatus != null">
+                AND fd.upload_status = #{uploadStatus}
+            </if>
+            <if test="userId != null">
+                AND fd.user_id = #{userId}
+            </if>
+        </where>
+        ORDER BY fd.create_time DESC
+    </select>
+
+    <select id="selectByIdWithKnowledgeBaseName" resultType="com.shujichen.rag.common.vo.file.FileDetailVO">
+        SELECT fd.id, fd.url, fd.size, fd.filename, fd.original_filename,
+               fd.bucket_name, fd.object_name, fd.base_path, fd.path,
+               fd.ext, fd.content_type, fd.platform, fd.hash_info,
+               fd.upload_id, fd.upload_status, fd.user_id,
+               fd.knowledge_base_id, fd.create_time,
+               kb.name AS knowledge_base_name
+        FROM file_detail fd
+                 LEFT JOIN knowledge_base kb ON fd.knowledge_base_id = kb.id
+        WHERE fd.id = #{id}
+    </select>
+
+</mapper>

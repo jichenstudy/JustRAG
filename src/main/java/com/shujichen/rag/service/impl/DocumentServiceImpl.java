@@ -3,6 +3,7 @@ package com.shujichen.rag.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shujichen.rag.common.enums.ParseStatus;
+import com.shujichen.rag.common.oss.factory.OssFactory;
 import com.shujichen.rag.entity.Document;
 import com.shujichen.rag.entity.DocumentChunk;
 import com.shujichen.rag.entity.FileDetail;
@@ -15,7 +16,6 @@ import com.shujichen.rag.service.FileDetailService;
 import com.shujichen.rag.service.VectorStoreService;
 import com.shujichen.rag.splitting.DocumentParser;
 import com.shujichen.rag.splitting.MarkdownSplittingService;
-import com.shujichen.rag.util.MinioUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,7 +36,6 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document>
     private final KnowledgeBaseMapper knowledgeBaseMapper;
     private final VectorStoreService vectorStoreService;
     private final FileDetailService fileDetailService;
-    private final MinioUtil minioUtil;
     private final MarkdownSplittingService splittingService;
 
     @Override
@@ -239,13 +238,13 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document>
 
         Document document = getDocumentByFileId(fileId);
         if (document != null) {
-            return false;
+            throw new RuntimeException("文件已关联知识库");
         }
 
         document = new Document();
         document.setKnowledgeBaseId(knowledgeBaseId);
         document.setFileId(fileId);
-        document.setName(fileDetail.getFilename());
+        document.setName(fileDetail.getOriginalFilename());
         document.setDocType(getDocTypeFromFilename(fileDetail.getFilename()));
         document.setParseStatus(ParseStatus.UPLOADED.getCode());
         document.setCreatedAt(LocalDateTime.now());
@@ -275,7 +274,7 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document>
             KnowledgeBase knowledgeBase = knowledgeBaseMapper.selectById(document.getKnowledgeBaseId());
 
             String content = DocumentParser.parse(
-                    minioUtil.downloadFile(fileDetail.getBucketName(), fileDetail.getObjectName()),
+                    OssFactory.instance().getObjectContent(fileDetail.getObjectName()),
                     fileDetail.getFilename());
 
             // 分片切割

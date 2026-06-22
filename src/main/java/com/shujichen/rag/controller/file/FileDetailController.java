@@ -2,7 +2,7 @@ package com.shujichen.rag.controller.file;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.shujichen.rag.common.dto.Result;
-import com.shujichen.rag.entity.FileDetail;
+import com.shujichen.rag.common.vo.file.FileDetailVO;
 import com.shujichen.rag.service.FileDetailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,20 +25,20 @@ public class FileDetailController {
     /**
      * 获取文件记录表列表
      *
-     * @param page        页码
-     * @param pageSize    每页数量
-     * @param filename    文件名
-     * @param hashInfo    哈希信息
+     * @param page         页码
+     * @param pageSize     每页数量
+     * @param filename     文件名
+     * @param hashInfo     哈希信息
      * @param uploadStatus 上传状态
      * @return 分页数据
      */
     @GetMapping("/list")
     @Operation(description = "获取文件记录表列表")
-    public Result<IPage<FileDetail>> list(@RequestParam(name = "page", defaultValue = "1") Integer page,
-                                          @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
-                                          @RequestParam(name = "filename", required = false) String filename,
-                                          @RequestParam(name = "hashInfo", required = false) String hashInfo,
-                                          @RequestParam(name = "uploadStatus", required = false) Integer uploadStatus) {
+    public Result<IPage<FileDetailVO>> list(@RequestParam(name = "page", defaultValue = "1") Integer page,
+                                            @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+                                            @RequestParam(name = "filename", required = false) String filename,
+                                            @RequestParam(name = "hashInfo", required = false) String hashInfo,
+                                            @RequestParam(name = "uploadStatus", required = false) Integer uploadStatus) {
         return Result.success(fileDetailService.selectPage(page, pageSize, filename, hashInfo, uploadStatus));
     }
 
@@ -50,8 +50,8 @@ public class FileDetailController {
      */
     @GetMapping("/{id}")
     @Operation(description = "获取文件记录表详情")
-    public Result<FileDetail> getInfo(@PathVariable("id") String id) {
-        return Result.success(fileDetailService.getById(id));
+    public Result<FileDetailVO> getInfo(@PathVariable("id") Long id) {
+        return Result.success(fileDetailService.getFileDetailVO(id));
     }
 
     /**

@@ -44,7 +44,7 @@ public class ChatAssistantDTO {
     /**
      * 关联知识库ID
      */
-    private String knowledgeBaseId;
+    private Long knowledgeBaseId;
 
     /**
      * 系统提示词

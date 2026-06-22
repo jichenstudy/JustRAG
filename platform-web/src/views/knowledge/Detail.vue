@@ -223,7 +223,7 @@
               <n-icon :component="DocumentTextOutline" :size="48" :depth="3" />
             </div>
             <n-text style="font-size: 16px">点击或拖拽文件到此区域上传</n-text>
-            <n-p depth="3" style="margin: 8px 0 0 0">支持大文件分片上传</n-p>
+            <n-p depth="3" style="margin: 8px 0 0 0">支持文件上传</n-p>
             <n-p depth="3" style="margin: 4px 0 0 0; font-size: 12px">
               支持格式: PDF, Word, Excel, TXT, Markdown, HTML
             </n-p>
@@ -237,7 +237,6 @@
           <n-descriptions-item label="文件名">{{ selectedFile.name }}</n-descriptions-item>
           <n-descriptions-item label="文件大小">{{ formatFileSize(selectedFile.size) }}</n-descriptions-item>
           <n-descriptions-item label="文件类型">{{ selectedFile.type || '未知' }}</n-descriptions-item>
-          <n-descriptions-item label="分片数量">{{ partCount }}</n-descriptions-item>
         </n-descriptions>
 
         <!-- 立即解析选项 -->
@@ -252,18 +251,14 @@
           </n-text>
         </div>
 
-        <!-- 上传进度 -->
-        <div v-if="uploadStatus !== 'idle'" class="upload-progress">
-          <div class="progress-info">
-            <span>{{ Math.round(overallProgress) }}%</span>
-            <span>{{ formatFileSize(uploadedSize) }} / {{ formatFileSize(selectedFile.size) }}</span>
+        <!-- 上传状态 -->
+        <div v-if="uploadStatus !== 'idle'" style="margin-top: 16px; text-align: center;">
+          <n-spin v-if="uploadStatus === 'uploading'" size="large" />
+          <n-icon v-else-if="uploadStatus === 'completed'" :component="DocumentTextOutline" size="48" color="#18a058" />
+          <n-icon v-else-if="uploadStatus === 'failed'" :component="DocumentTextOutline" size="48" color="#d03050" />
+          <div style="margin-top: 12px; font-size: 14px;">
+            {{ uploadStatus === 'uploading' ? '上传中...' : uploadStatus === 'completed' ? '上传完成' : '上传失败' }}
           </div>
-          <n-progress
-            type="line"
-            :percentage="Math.round(overallProgress)"
-            :status="getProgressStatus()"
-            :height="10"
-          />
         </div>
 
         <!-- 上传结果 -->
@@ -364,13 +359,7 @@ import { knowledgeBaseApi } from '@/api/knowledgeBase'
 import { modelApi } from '@/api/model'
 import { documentApi } from '@/api/document'
 import {
-  initMultipartUpload,
-  recordPartComplete,
-  completeMultipartUpload,
-  abortMultipartUpload,
-  uploadChunkToUrl,
-  checkFileExists,
-  generateFileHash,
+  uploadFile,
   getFileDetail,
   type FileDetail
 } from '@/api/file'
@@ -388,25 +377,10 @@ const showUploadModal = ref(false)
 const savingConfig = ref(false)
 const loadingModels = ref(false)
 
-// 分片上传相关
+// 上传相关
 const selectedFile = ref<File | null>(null)
 const uploadStatus = ref<'idle' | 'uploading' | 'completed' | 'failed'>('idle')
-const uploadId = ref('')
-const chunkSize = 5 * 1024 * 1024 // 5MB
-const uploadedSize = ref(0)
 const uploadResult = ref<{ success: boolean; message: string } | null>(null)
-
-interface ChunkInfo {
-  partNumber: number
-  start: number
-  end: number
-  size: number
-  progress: number
-  status: 'pending' | 'uploading' | 'completed' | 'failed'
-  uploadUrl?: string
-}
-
-const chunks = ref<ChunkInfo[]>([])
 
 // 是否立即解析
 const isParse = ref(true)
@@ -455,19 +429,6 @@ const configRules = {
     trigger: 'change'
   }
 }
-
-// 计算分片数量
-const partCount = computed(() => {
-  if (!selectedFile.value) return 0
-  return Math.ceil(selectedFile.value.size / chunkSize)
-})
-
-// 计算整体进度
-const overallProgress = computed(() => {
-  if (!selectedFile.value || chunks.value.length === 0) return 0
-  const totalProgress = chunks.value.reduce((sum, chunk) => sum + chunk.progress, 0)
-  return totalProgress / chunks.value.length
-})
 
 // 表格列定义
 const docColumns: DataTableColumns<Document> = [
@@ -750,9 +711,6 @@ const formatFileSize = (bytes: number) => {
 const resetUpload = () => {
   selectedFile.value = null
   uploadStatus.value = 'idle'
-  uploadId.value = ''
-  chunks.value = []
-  uploadedSize.value = 0
   uploadResult.value = null
   isParse.value = true
 }
@@ -772,75 +730,7 @@ const closeUploadModal = () => {
   loadDocuments()
 }
 
-// 创建分片信息
-const createChunks = () => {
-  if (!selectedFile.value) return
-
-  const file = selectedFile.value
-  const totalChunks = Math.ceil(file.size / chunkSize)
-
-  chunks.value = []
-  for (let i = 0; i < totalChunks; i++) {
-    const start = i * chunkSize
-    const end = Math.min(start + chunkSize, file.size)
-
-    chunks.value.push({
-      partNumber: i + 1,
-      start,
-      end,
-      size: end - start,
-      progress: 0,
-      status: 'pending'
-    })
-  }
-}
-
-// 上传单个分片
-const uploadChunk = async (chunk: ChunkInfo): Promise<void> => {
-  if (!selectedFile.value || !chunk.uploadUrl) return
-
-  try {
-    chunk.status = 'uploading'
-
-    const fileSlice = selectedFile.value.slice(chunk.start, chunk.end)
-
-    await uploadChunkToUrl(chunk.uploadUrl, fileSlice, (progress) => {
-      chunk.progress = progress
-      updateUploadedSize()
-    })
-
-    // 通知后端分片上传完成
-    await recordPartComplete(uploadId.value, chunk.partNumber)
-
-    chunk.status = 'completed'
-    chunk.progress = 100
-    updateUploadedSize()
-  } catch (error: any) {
-    chunk.status = 'failed'
-    throw error
-  }
-}
-
-// 更新已上传大小
-const updateUploadedSize = () => {
-  uploadedSize.value = chunks.value.reduce((sum, chunk) => {
-    return sum + (chunk.size * chunk.progress) / 100
-  }, 0)
-}
-
-// 获取进度条状态
-const getProgressStatus = () => {
-  switch (uploadStatus.value) {
-    case 'completed':
-      return 'success'
-    case 'failed':
-      return 'error'
-    default:
-      return 'default'
-  }
-}
-
-// 上传文档
+// 上传文档（简单上传）
 const handleUpload = async () => {
   if (!selectedFile.value) {
     message.warning('请选择文件')
@@ -851,84 +741,40 @@ const handleUpload = async () => {
     uploadStatus.value = 'uploading'
     uploadResult.value = null
 
-    // 1. 秒传检查
-    const fileHash = generateFileHash(selectedFile.value.name, selectedFile.value.size)
-    const checkRes = await checkFileExists(fileHash)
+    // 1. 上传文件
+    const uploadRes = await uploadFile(selectedFile.value)
 
-    if (checkRes.code === 200 && checkRes.data === true) {
-      // 文件已存在，秒传成功 - 但需要获取文件ID
-      // 这里假设秒传时后端会返回文件ID，如果不返回需要调整
-      message.info('文件已存在，正在关联...')
-      // 秒传情况下可能需要单独处理，这里先跳过秒传逻辑
+    if (uploadRes.code !== 200 || !uploadRes.data) {
+      throw new Error('上传文件失败')
     }
 
-    // 2. 创建分片
-    createChunks()
+    // 2. 获取文件ID
+    const fileId = uploadRes.data.fileId
 
-    // 3. 初始化分片上传
-    const initRes = await initMultipartUpload(
-      selectedFile.value.name,
-      partCount.value,
-      selectedFile.value.size
-    )
+    // 3. 关联知识库
+    const knowledgeBaseId = route.params.id as string
+    const connectRes = await documentApi.connectKnowledgeBase(fileId, knowledgeBaseId)
 
-    if (initRes.code !== 200 || !initRes.data) {
-      throw new Error('初始化上传失败')
+    if (connectRes.code !== 200 || !connectRes.data) {
+      throw new Error('关联知识库失败')
     }
 
-    uploadId.value = initRes.data.uploadId
-
-    // 设置每个分片的上传URL
-    initRes.data.uploadUrls.forEach((urlInfo) => {
-      const chunk = chunks.value.find((c) => c.partNumber === urlInfo.partNumber)
-      if (chunk) {
-        chunk.uploadUrl = urlInfo.url
+    // 4. 如果开启解析，调用解析接口
+    if (isParse.value) {
+      try {
+        await documentApi.parseDocument(fileId)
+        message.success('上传成功，文档正在解析中')
+      } catch (parseError) {
+        message.warning('上传成功，但解析任务提交失败')
       }
-    })
-
-    // 4. 顺序上传每个分片
-    for (const chunk of chunks.value) {
-      if (uploadStatus.value !== 'uploading') break
-      await uploadChunk(chunk)
+    } else {
+      message.success('上传成功')
     }
 
-    // 5. 检查是否所有分片都上传成功
-    const allCompleted = chunks.value.every((c) => c.status === 'completed')
-    if (allCompleted) {
-      // 完成上传，合并文件并入库
-      const completeRes = await completeMultipartUpload(uploadId.value)
-      if (completeRes.code === 200 && completeRes.data) {
-        // 使用 fileId 进行关联
-        const fileId = completeRes.data.fileId
-
-        // 6. 关联知识库
-        const knowledgeBaseId = route.params.id as string
-        const connectRes = await documentApi.connectKnowledgeBase(fileId, knowledgeBaseId)
-
-        if (connectRes.code !== 200 || !connectRes.data) {
-          throw new Error('关联知识库失败')
-        }
-
-        // 7. 如果开启解析，调用解析接口
-        if (isParse.value) {
-          try {
-            await documentApi.parseDocument(fileId)
-            message.success('上传成功，文档正在解析中')
-          } catch (parseError) {
-            message.warning('上传成功，但解析任务提交失败')
-          }
-        } else {
-          message.success('上传成功')
-        }
-
-        uploadStatus.value = 'completed'
-        uploadResult.value = {
-          success: true,
-          message: `文件 ${selectedFile.value.name} 上传成功`
-        }
-      } else {
-        throw new Error('文件合并失败')
-      }
+    uploadStatus.value = 'completed'
+    uploadResult.value = {
+      success: true,
+      message: `文件 ${selectedFile.value.name} 上传成功`
     }
   } catch (error: any) {
     uploadStatus.value = 'failed'
@@ -940,23 +786,16 @@ const handleUpload = async () => {
   }
 }
 
-// 取消正在进行的上传
-const cancelUpload = async () => {
+// 取消上传
+const cancelUpload = () => {
   dialog.warning({
     title: '确认取消',
     content: '确定要取消上传吗？',
     positiveText: '确定',
     negativeText: '取消',
-    onPositiveClick: async () => {
-      try {
-        if (uploadId.value) {
-          await abortMultipartUpload(uploadId.value)
-        }
-        resetUpload()
-        message.info('已取消上传')
-      } catch (error) {
-        console.error('取消上传失败', error)
-      }
+    onPositiveClick: () => {
+      resetUpload()
+      message.info('已取消上传')
     }
   })
 }

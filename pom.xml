@@ -29,11 +29,13 @@
         <pdfbox.version>2.0.30</pdfbox.version>
         <jsoup.version>1.16.1</jsoup.version>
         <ip2region.version>3.3.7</ip2region.version>
-        <minio.version>8.5.7</minio.version>
         <dashscope.version>1.0.0.2</dashscope.version>
         <mcp-bom.version>0.17.0</mcp-bom.version>
         <spring-ai-bom.version>1.0.0</spring-ai-bom.version>
         <elasticsearch-java.version>8.15.3</elasticsearch-java.version>
+        <aws.sdk.version>2.28.22</aws.sdk.version>
+        <redisson.version>3.52.0</redisson.version>
+        <lock4j.version>2.2.7</lock4j.version>
     </properties>
 
     <profiles>
@@ -59,12 +61,6 @@
     </profiles>
 
     <dependencies>
-        <!-- minio -->
-        <dependency>
-            <groupId>io.minio</groupId>
-            <artifactId>minio</artifactId>
-            <version>${minio.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-mcp-client-webflux</artifactId>
@@ -239,6 +235,76 @@
             <groupId>org.lionsoul</groupId>
             <artifactId>ip2region</artifactId>
             <version>${ip2region.version}</version>
+        </dependency>
+
+        <!--  AWS SDK for Java 2.x  -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>${aws.sdk.version}</version>
+            <exclusions>
+                <!-- 东西 30M 特别大的 jar 包 性能跟 Netty 差不多 有需要可以自行替换使用 -->
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>aws-crt-client</artifactId>
+                </exclusion>
+                <!-- 将基于 Apache 的 HTTP 客户端从类路径中移除 -->
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>apache-client</artifactId>
+                </exclusion>
+                <!-- 将配置基于 URL 连接的 HTTP 客户端从类路径中移除 -->
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>url-connection-client</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- 适用于 Netty 的客户端 -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>netty-nio-client</artifactId>
+            <version>${aws.sdk.version}</version>
+        </dependency>
+
+        <!-- 客户端的性能增强传输管理器 -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3-transfer-manager</artifactId>
+            <version>${aws.sdk.version}</version>
+        </dependency>
+
+        <!-- redisson -->
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson-spring-boot-starter</artifactId>
+            <version>${redisson.version}</version>
+        </dependency>
+
+        <!-- lock4j -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>lock4j-redisson-spring-boot-starter</artifactId>
+            <version>${lock4j.version}</version>
+        </dependency>
+
+        <!-- caffeine -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
+        <!-- redis序列化替代方案 比json快无数的跨语言二进制序列化 -->
+        <dependency>
+            <groupId>org.apache.fory</groupId>
+            <artifactId>fory-core</artifactId>
+            <version>0.13.1</version>
         </dependency>
 
         <!-- Test -->

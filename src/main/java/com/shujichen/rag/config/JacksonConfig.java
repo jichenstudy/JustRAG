@@ -5,6 +5,8 @@ import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilde
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.TimeZone;
+
 /**
  * Jackson配置类
  */
@@ -20,6 +22,7 @@ public class JacksonConfig {
             // 所有 Long 类型（含包装类和基本类型）序列化为字符串
             builder.serializerByType(Long.class, ToStringSerializer.instance);
             builder.serializerByType(Long.TYPE, ToStringSerializer.instance);
+            builder.timeZone(TimeZone.getDefault());
         };
     }
 }

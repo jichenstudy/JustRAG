@@ -3,9 +3,10 @@ package com.shujichen.rag.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+
 import java.math.BigDecimal;
 import java.util.Date;
-import lombok.Data;
 
 /**
  * 聊天助理配置表
@@ -48,7 +49,7 @@ public class ChatAssistant {
     /**
      * 关联知识库ID
      */
-    private String knowledgeBaseId;
+    private Long knowledgeBaseId;
 
     /**
      * 系统提示词（指导AI行为的指令）

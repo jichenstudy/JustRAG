@@ -29,7 +29,7 @@ CREATE TABLE `ai_mcp_server_config`  (
   `args` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'STDIO模式：命令参数（JSON格式）',
   `env` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT 'STDIO模式：环境变量（JSON格式）',
   `url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT 'SSE/HTTP模式：服务地址URL',
-  `user_id` int NULL DEFAULT NULL COMMENT '用户ID',
+  `user_id` bigint NULL DEFAULT NULL COMMENT '用户ID',
   `created_at` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `is_enabled` tinyint NULL DEFAULT 1 COMMENT '是否启用',
@@ -54,7 +54,7 @@ CREATE TABLE `ai_model_config`  (
   `provider` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '提供商: DASHSCOPE, OPENAI, OLLAMA, AZURE_OPENAI',
   `api_key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '模型密钥',
   `api_endpoint` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '模型端点',
-  `user_id` int NULL DEFAULT NULL COMMENT '用户ID',
+  `user_id` bigint NULL DEFAULT NULL COMMENT '用户ID',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
   PRIMARY KEY (`id`) USING BTREE
@@ -75,17 +75,17 @@ CREATE TABLE `chat_assistant`  (
   `assistant_description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '助理描述信息',
   `empty_reply` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '空回复（无匹配回复时的默认回复）',
   `opening_statement` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '开场白（会话开始时的欢迎语）',
-  `knowledge_base_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '关联知识库ID',
+  `knowledge_base_id` bigint NULL DEFAULT NULL COMMENT '关联知识库ID',
   `system_prompt` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '系统提示词（指导AI行为的指令）',
   `top_n` int NULL DEFAULT 5 COMMENT '检索数量（返回最相似结果数量，3-10，默认5）',
   `top_p` decimal(3, 2) NULL DEFAULT 0.50 COMMENT '核采样参数（控制词汇选择范围，0-1，默认0.8）',
   `enable_reasoning_mode` tinyint(1) NULL DEFAULT 0 COMMENT '是否开启推理模式（0-关闭，1-开启）',
-  `model_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '关联模型（AI模型名称）',
+  `model_id` bigint NULL DEFAULT NULL COMMENT '关联模型ID',
   `temperature` decimal(3, 2) NULL DEFAULT 0.80 COMMENT '温度参数（控制随机性，0-2，默认0.8）',
   `presence_penalty` decimal(3, 2) NULL DEFAULT 0.00 COMMENT '存在处罚（减少重复内容，-2到2，默认0）',
   `frequency_penalty` decimal(3, 2) NULL DEFAULT 0.00 COMMENT '频率惩罚（减少高频词，-2到2，默认0）',
   `max_tokens` int NULL DEFAULT 2000 COMMENT '最大token数（单次生成最大长度）',
-  `user_id` int NULL DEFAULT NULL COMMENT '用户ID',
+  `user_id` bigint NULL DEFAULT NULL COMMENT '用户ID',
   `created_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE,
@@ -202,7 +202,7 @@ CREATE TABLE `file_detail`  (
   `hash_info` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL COMMENT '哈希信息',
   `upload_id` varchar(128) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NULL DEFAULT NULL COMMENT '上传ID',
   `upload_status` int NULL DEFAULT NULL COMMENT '上传状态 0-上传失败 1-上传成功',
-  `user_id` int NULL DEFAULT NULL COMMENT '用户ID',
+  `user_id` bigint NULL DEFAULT NULL COMMENT '用户ID',
   `knowledge_base_id` bigint NULL DEFAULT NULL COMMENT '绑定的知识库ID',
   `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE
@@ -226,7 +226,7 @@ CREATE TABLE `knowledge_base`  (
   `chunk_size` int NULL DEFAULT 1000 COMMENT '分片字符数',
   `chunk_overlap` int NULL DEFAULT 200 COMMENT '分片重叠字符数',
   `chunk_min_size` int NULL DEFAULT 100 COMMENT '最小分片字符数',
-  `team_id` int NULL DEFAULT NULL COMMENT '团队ID',
+  `team_id` bigint NULL DEFAULT NULL COMMENT '团队ID',
   `created_at` datetime NOT NULL COMMENT '创建时间',
   `updated_at` datetime NOT NULL COMMENT '最后更新时间',
   PRIMARY KEY (`id`) USING BTREE
@@ -235,6 +235,36 @@ CREATE TABLE `knowledge_base`  (
 -- ----------------------------
 -- Records of knowledge_base
 -- ----------------------------
+
+-- ----------------------------
+-- Table structure for oss_config
+-- ----------------------------
+DROP TABLE IF EXISTS `oss_config`;
+CREATE TABLE `oss_config`  (
+  `oss_config_id` bigint NOT NULL COMMENT '存储配置主键ID',
+  `config_key` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '配置key',
+  `access_key` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT 'accessKey',
+  `secret_key` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT 'secretKey',
+  `bucket_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '桶名称',
+  `prefix` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '前缀',
+  `endpoint` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '访问站点',
+  `domain` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '自定义域名',
+  `is_https` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'N' COMMENT '是否https（Y=是,N=否）',
+  `region` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '域',
+  `access_policy` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '1' COMMENT '桶权限类型(0=private 1=public 2=custom)',
+  `status` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '1' COMMENT '是否默认（0=是,1=否）',
+  `ext_json` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '扩展字段',
+  `user_id` bigint NULL DEFAULT NULL COMMENT '用户ID',
+  `remark` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`oss_config_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '存储配置表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of oss_config
+-- ----------------------------
+INSERT INTO `oss_config` VALUES (1, 'minio', 'minioadmin', 'minioadmin', 'just-rag', '', 'http://localhost:9000', '', 'N', '', '1', '0', '', 1, '', '2026-06-22 10:57:10', '2026-06-22 10:57:10');
 
 -- ----------------------------
 -- Table structure for sys_user
@@ -266,7 +296,7 @@ CREATE TABLE `sys_user`  (
 -- ----------------------------
 -- Records of sys_user
 -- ----------------------------
-INSERT INTO `sys_user` VALUES (1, 'admin', '$2a$10$9eqqZ6CVCPeLHThuo9s22edJ7ZQHofiU9BphFs4xhyfuxNTxjVDHi', '2026-06-18 12:23:30', '2026-06-18 12:23:40', 1, '0:0:0:0:0:0:0:1', '内网IP', 'Windows 10 or Windows Server 2016', '2026-06-18 19:38:00', 'Chrome', '超级管理员', 'https://q8.itc.cn/q_70/images03/20240305/5637ad3f16d144ecb5469acbde2b67c7.jpeg', '15888888888', 'mail@shujichen.com', 1, 'PASSWORD', 'The world belongs to all, long live the people.');
+INSERT INTO `sys_user` VALUES (1, 'admin', '$2a$10$9eqqZ6CVCPeLHThuo9s22edJ7ZQHofiU9BphFs4xhyfuxNTxjVDHi', '2026-06-18 12:23:30', '2026-06-18 12:23:40', 1, '0:0:0:0:0:0:0:1', '内网IP', 'Windows 10 or Windows Server 2016', '2026-06-20 22:09:01', 'QQBrowser', '超级管理员', 'https://q8.itc.cn/q_70/images03/20240305/5637ad3f16d144ecb5469acbde2b67c7.jpeg', '15888888888', 'mail@shujichen.com', 1, 'PASSWORD', 'The world belongs to all, long live the people.');
 
 -- ----------------------------
 -- Table structure for sys_user_team

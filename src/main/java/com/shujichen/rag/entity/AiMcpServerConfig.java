@@ -1,15 +1,12 @@
 package com.shujichen.rag.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-
-import java.time.LocalDateTime;
-import java.util.Date;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 /**
  * MCP服务配置表
@@ -17,7 +14,7 @@ import lombok.Data;
 @TableName(value ="ai_mcp_server_config")
 @Data
 public class AiMcpServerConfig {
-    
+
     /**
      * MCP服务配置ID
      */

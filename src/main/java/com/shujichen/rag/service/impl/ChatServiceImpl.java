@@ -294,7 +294,7 @@ public class ChatServiceImpl implements ChatService {
         String systemPrompt = assistant.getSystemPrompt();
 
         // 获取知识库信息（用于RAG检索）
-        String knowledgeBaseId = assistant.getKnowledgeBaseId();
+        Long knowledgeBaseId = assistant.getKnowledgeBaseId();
         KnowledgeBase knowledgeBase = null;
         if (knowledgeBaseId != null) {
             knowledgeBase = knowledgeBaseMapper.selectById(knowledgeBaseId);
