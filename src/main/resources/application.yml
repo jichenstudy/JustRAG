@@ -131,3 +131,9 @@ vector-store:
     api-key:
     # 是否启用 SSL/TLS 加密
     ssl-enabled: false
+
+mineru:
+  server-url: https://mineru.net
+  # MinerU 云端 API Token，用于访问 https://mineru.net API
+  # 如果使用本地化部署，此配置项可留空
+  token: xxx

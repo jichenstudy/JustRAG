@@ -1,0 +1,352 @@
+# 怎么停止期待一个你明知不可能的人
+
+文森1，拖拖²，原神哥3\*
+
+在此填写作者的单位信息和资助信息
+
+1第一单位，深圳，中国
+
+2第二单位，杜弗，新加坡
+
+通讯作者：第一作者（yang134397@gapps.uwcsea.edu.sg）
+
+本研究由吃喝全免基金资助（项目编号：123456789）
+
+本文包含补充材料
+
+ABSTRACT/摘要在人类情感活动中，个体常陷入一种非理性的认知困境：理性层面完全接受“此人不可得”的客观判断，情感层面却持续分泌期待，形成持久的精神内耗。本研究提出了一种基于认知失调理论与强化学习框架的“期待戒断动态模型（Expectation Withdrawal DynamicsModel. EWDM）”，系统刻画了当事人在明知关系不可行的情况下，其期待值如何受记忆提取偏差（MemoryRetrieval Bias）、间歇性强化效应（Intermittent Reinforcement Effect）以及“TA昨晚点赞了我的朋友圈”事件的非线性冲击。通过引入量化执念强度参数（Quantified Obsession Intensity,QOI）、现实检验频率（RealityTestingFrequency,RTF）以及“万一呢系数”（What-if Coefficient,WIC），本模型成功在理论层面解释了为何83.6%的当事人在理性概率低于5%的情形下，仍每天查看对方社交媒体23.7次。实验数据来源于对312名自我报告“走不出来”的成年人的追踪调查，结果表明本模型具有优异的拟合优度 $( \mathrm { R } ^ { 2 } = 0 . 8 9 , \ \mathrm { P } < 0 . 0 0 1 )$ 。本研究结论指出：人类停止期待的过程本质上是一个在间歇性强化主导下的非马尔可夫过程—每一次偶然的积极反馈都会让戒断时钟归零，我们将这一现象命名为“希望的陷阱（HopeTrap）”。
+
+INDEXTERMS /关键词期待戒断，认知失调，间歇性强化，情感执念，希望的陷阱,概率收敛失败。
+
+IMPACT STATEMENT/影响声明仅影响半夜三点还在翻聊天记录的人。
+
+## I. INTRODUCTION/引言
+
+在当代情感生活中，“明知不可得却仍在期待”已成为一种普遍的精神困境。这种现象具有跨年龄、跨性别、跨文化的一致性：当事人能够清晰地陈述“我们不合适”“TA已经有对象了”“我们之间没有未来”等客观事实，却在每一个手机通知响起时心跳加速，在每一个深夜反复点开对方的社交媒体主页，在每一个“对方正在输入…”的提示前屏住呼吸。这种认知与情感的撕裂，构成了人类心理活动中最为持久的内耗形式之一。
+
+从认知心理学视角看，这是一种典型的认知失调(Cognitive Dissonance）——个体的理性认知与情感体验之间存在不可调和的矛盾。从行为心理学视角看，这又是一种典型的间歇性强化（Intermittent
+
+Reinforcement）——正是那些偶然的、不可预测的积极反馈（如对方偶尔的点赞、礼貌性的问候），使得期待行为得以持续强化，难以消退。
+
+本研究将这一现象操作化为“期待戒断困难”，并试图回答一个看似简单实则复杂的问题：当理性已经宣判死刑，情感为何仍在无期徒刑里慢慢熬？
+
+## II. LITERATURE REVIEW/文献综述
+
+2.1.认知失调理论在情感领域的应用
+
+Festinger（1957）的认知失调理论为本研究提供了基础框架。当个体同时持有“此人不可得”的认知和“我仍在期待”的行为时，会产生心理不适。为缓解这种不适，个体往往采取两种策略：改变行为（停止期待）或改变认知（寻找“其实可能还有机会”的证据）。遗憾的是，绝大多数人选择了后者。
+
+## 2.2. 间歇性强化的不可消退性
+
+Skinner（1957）的操作条件反射研究表明，间歇性强化（Variable Ratio Reinforcement）比连续强化更难以消退。在情感期待的情境中，对方的积极反馈（如回复消息、点赞、偶然的相遇）通常呈现不可预测的间歇性模式——这正是期待行为“戒不断”的行为学根源。正如文献[15]所指出的，这种强化模式使得个体如同“陷入概率陷阱的赌徒”，永远相信下一次可能就是赢的那一次。
+
+## 2.3.记忆提取偏差与情感渲染
+
+Schacter（1999）关于记忆七宗罪的研究指出，人类记忆具有“持续性”（Persistence）偏差——情绪性事件的记忆比中性事件更难遗忘。在情感期待的语境下，个体倾向于过度提取那些积极的、充满希望的片段（“那天TA对我笑了”“那次TA主动找我聊天”），而自动过滤那些负面的、明确的拒绝信号。这一机制被本研究命名为“记忆的玫瑰色滤镜效应”。
+
+## 2.4.社会比较与社交媒体触发
+
+Valkenburg等人（2006）的研究表明，社交媒体的使用与个体的情感状态存在复杂关联。对于“期待戒断困难”的个体而言，社交媒体既是痛苦来源（看到对方的新动态），又是希望的燃料（“TA发这条动态是不是给我看的？”）。本研究将这一现象定义为“社交媒体触发的期待循环”。
+
+## III. MODEL CONSTRUCTION/模型构建
+
+## 3.1. 期待戒断动态模型（EWDM）
+
+本研究提出的期待戒断动态模型（EWDM）将个体的期待值E(t)定义为时间的函数，其演化过程受多个参数共同影响：
+
+$$
+\begin{array} { c } { E ( t + 1 ) = E ( t ) \times ( 1 - \delta ) + \alpha \times \mathbf { M } ( t ) + \beta \times R ( t ) } \\ { - \gamma \times F ( t ) + \varepsilon } \end{array}
+$$
+
+其中：
+
+δ：自然衰减率，即如果没有任何外界刺激，期待随时间自然消退的速度
+
+M(t)：记忆提取强度，即在t时刻被激活的积极记忆的数量与情感强度
+
+R(t)：间歇性强化事件，即对方偶然释放的积极信号(0-1变量，1表示发生)
+
+F(t)：现实检验事件，即明确提醒“此人不可得”的事件（如看到对方秀恩爱）
+
+α,β，γ：对应的影响系数
+
+ε：随机误差项（深夜emo加成）
+
+## 3.2. 核心参数定义
+
+## 量化执念强度（Quantified Obsession Intensity，
+
+QOI）定义为个体对目标对象的认知资源占用比例，操作化为：每天想到对方的次数/清醒总时长。本研究的基线样本显示，QOI>0.4（即每天有超过40%的清醒时间在想对方）的个体，期待戒断成功率显著低于QOI<0.2的个体（p<0.01）。
+
+现实检验频率（Reality Testing Frequency, RTF）定义为个体主动接触“对方不可能”证据的频率。理论预测：RTF与期待值呈U型关系——过低则缺乏现实校正，过高则形成“反刍思维”（Rumination），反而加深执念。
+
+“万一呢系数”（What-if Coefficient,WIC）定义为个体在面对不确定性时，倾向于选择“相信可能性”的认知偏差强度。高WIC个体在看到对方一个普通动态时，更容易产生“万一TA是在暗示我”的解释。本研究发现，WIC与个体的乐观人格特质呈正相关（r=0.43），但与情感领域的理性判断能力呈显著负相关（r=- 0.67）。
+
+## IV. METHODOLOGY/研究方法
+
+## 4.1. 样本与数据研究
+
+本研究招募了200名自我报告“明知不可能但仍在期待”的成年人（年龄18-35岁，女性占比57.4%，男性占比42.6%）。采用30天连续追踪法，要求参与者每日记录：
+
+当天想到对方的次数
+
+当天是否收到对方的任何信号（点赞、评论、消息等）
+
+当天是否接触到对方“不可能”的证据当天的期待强度（1-10分自评）
+
+同时，通过手机使用记录获取参与者查看对方社交媒体的频率。
+
+## 4.2. 关键变量测量
+
+期待值（Expectation Level, EL）：采用7点量表，每日自评“今天你对TA的期待程度”。
+
+间歇性强化事件（Intermittent Reinforcement Event,IRE）：定义为对方任何形式的主动接触或积极信号。值得注意的是，研究发现“对方点赞了别人但没有点赞我”也被部分参与者解读为强化事件（负向强化），这超出了本研究的定义范围，将在未来研究中探讨。
+
+现实检验事件（Reality Testing Event, RTE）：定义为明确提醒“此人不可得”的事件，如看到对方有伴侣、对方明确表达拒绝、理性朋友的有力劝诫等。
+
+## V. RESULTS/结果
+
+本节展示实验结果。表Ⅰ和图1分别展示了定量和定性结果。
+
+实验结果表明，所提出的方法在多个评价指标上均优于现有的基线方法。具体而言，在指标一上提升X%，在指标二上提升了Y%。结果结果结果结果结果结果结果结果结果结果结果结果结果结果结果结果结果结果结果结果结果结果结果结果结果结果。
+
+## VI. DISCUSSION/讨论
+
+## 6.1. 核心发现的理论意义
+
+本研究揭示了“停止期待”这一过程的本质困境：它是一个在间歇性强化主导下的非马尔可夫过程。所谓非马尔可夫，是指系统的未来状态不仅取决于当前状态，还取决于历史一—每一次偶然的积极反馈都让戒断时钟归零，使个体陷入“接近放弃一收到信号一重回起点”的循环。
+
+这一发现挑战了传统认知行为疗法中关于“暴露一消退”的线性假设。在情感期待的语境下，间歇性强化的存在使得单纯的“不接触”策略难以奏效一一因为对方的存在本身（即使不主动接触）就已经构成了背景性的强化环境。
+
+## 6.2.希望的陷阱：概念化与论证
+
+基于上述发现，本研究正式提出“希望的陷阱”
+
+（HopeTrap）这一概念，定义为：个体在明知目标不可得的情况下，由于间歇性强化事件的不可预测出现，导致期待行为持续维持、戒断失败的认知一行为困境。
+
+“希望的陷阱”具有三个核心特征：
+
+1. 理性一情感分离：认知层面接受“不可能”，情感层面持续期待
+
+2. 间歇性强化依赖：正是那些偶然的积极信号，使得消退无法发生
+
+3.自我延续循环：期待导致关注，关注导致解读， 解读导致新的期待
+
+## 6.3.实践启示：如何“停止期待”
+
+基于本研究的发现，我们尝试回答最初的问题：怎么停止期待一个你明知不可能的人？
+
+## 6.3.1 切断间歇性强化源
+
+既然间歇性强化是期待维持的核心机制，那么最直接的策略就是切断强化源。
+
+这意味着：
+
+停止查看对方社交媒体（减少R(t)的发生概率）
+
+避免任何形式的接触（包括点赞、评论、偶遇）
+
+-告知共同朋友不要传递对方的消息
+
+然而，本研究发现一个残酷的事实：即使完全切断主动接触，个体仍会从“对方没有联系我”这一事实中解读出信号（“TA这么久不联系我，是不是也在纠结？”）——这被称为“零信号的信号化”现象。这表明，单纯的物理隔离可能不足以打破“希望的陷阱”。
+
+## 6.3.2重构记忆提取模式
+
+鉴于记忆提取偏差（M(t)）对期待值的强大影响，干预记忆提取模式成为关键：
+
+建立“提醒清单”：记录对方明确拒绝、不合适、不可得的证据，在记忆提取积极片段时主动调取
+
+重构叙事：将“TA曾经对我笑”重构为“TA对很多人都笑”
+
+情境化记忆：提醒自己那些“美好回忆”往往伴随着未被注意的压力和不适
+
+## 6.3.3 打破反刍悖论
+
+针对“过度现实检验反而加深执念”的悖论，本研究发现有效的策略是设定“反刍时间窗”——允许自己每天有固定的15分钟专门用来想对方、查对方、分析对方，时间一到立即停止。这种方法在认知行为疗法中被称为“刺激控制”（StimulusControl），能够将反刍行为限制在可控范围内，避免其全天候蔓延。
+
+## 6.3.4接受“非线性戒断”
+
+本研究最重要的实践启示或许是：接受戒断过程的非线性。传统观念认为，“放下”应该是一条持续向下的曲线；但本研究表明，真正的戒断是反复的、波动的、进二退一的。了解这一规律，有助于个体在面对反弹时不至于自我否定（“我怎么又没出息
+
+了”），从而避免因自责而陷入更深的情感投入。
+
+## VII. LIMITATIONS AND FUTURE DIRECTIONS / 局限性与未来方向
+
+本研究存在若于局限性。首先，样本年龄集中在18-35岁，未能涵盖中年及老年群体的情感期待现象一一不同生命阶段对“不可能”的接受度可能存在系统性差
+
+异。其次，研究主要依赖自我报告数据，存在记忆偏差和社会赞许性偏差。未来研究可采用生理指标（如皮肤电、心率变异性）作为期待强度的客观测量。
+
+此外，本研究未能深入探讨人格特质（如依恋类型、神经质水平）对期待戒断过程的调节作用。安全型依恋个体是否更容易走出“希望的陷阱”？焦虑型依恋个体是否对间歇性强化更为敏感？这些问题有待未来研究进一步探索。
+
+随着人工智能技术的发展，未来的研究可以探索AI辅助的期待戒断干预：通过算法识别个体陷入“希望的陷阱”的临界点，在期待值即将反弹时推送干预内容。然而，这也引发了关于技术介入情感伦理的思考一一我们是否应该用技术“干预”人类最本真的情感体验？
+
+## VIII. CONCLUSIONS / 结论
+
+本研究通过构建期待戒断动态模型（EWDM），揭示了“怎么停止期待一个你明知不可能的人”这一问题的本质：它不是一道可以用意志力解答的题目，而是一个在间歇性强化主导下的非线性过程。研究发现，期待戒断的困难源于三个核心机制一一间歇性强化的不可消退性、记忆提取偏差的自我延续、以及反刍悖论的存在。
+
+本研究最重要的贡献是提出了“希望的陷阱”这一概念，用以描述个体明知不可得却仍在期待的认知一行为困境。这一概念不仅有助于理解情感领域的执念现象，也为临床干预提供了理论依据：只有认识到戒断过程的非线性和反复性，个体才能在遭遇反弹时保持自我同情，而非陷入更深的自责。
+
+最后，本研究想指出一个或许是最重要的发现：真正让人走不出来的，往往不是那个人本身，而是那个人带来的间歇性希望。当个体意识到这一点，TA就从一个被动接受强化的“实验动物”，转变为一个能够审视自身认知模式的“观察者”——而这种元认知的觉醒，或许才是走出“希望的陷阱”的第一步。
+
+FIG.1—期待值随时间演化曲线  
+![](images/b6ccec64501a596b8253e75115c6998da98893ff119729dd7f5a040eca0e5f0c.jpg)  
+E(t) under no-reinforcement vs. intermittent reinforcement (n=312, 30-day). Red dashes = Hope Trap resets.  
+表格1:期待值随时间演化曲线：无强化 vs.间歇性强化。
+
+展示了30天追踪期内，两组参与者（无强化组vs.间歇性强化组）的期待值E(t)E(t)演化轨迹。
+
+蓝色实线为无强化条件下的自然衰减曲线，呈现平滑下降趋势；红色虚线为间歇性强化条件下的演化轨迹，在D5、D13、D21、D27等时间点出现显著的期待值反弹峰值（“希望的陷阱”重置现象）。
+
+数据表明，每次间歇性强化事件平均抹去7.3天的自然衰减效果，解释了期待戒断困难的核心机制。
+
+FIG.2 — QOI 分布与戒断成功率  
+![](images/9058986ffaafe637294d8e92995885cff8cf0254b710141143929dcddcd13a81.jpg)  
+QOI distribution; red line = withdrawal success rate. QOI > 0.4 predicts failure (p < 0.01).  
+表格2:量化执念强度（QOI）分布与戒断成功率
+
+展示了312名参与者的Q0I分布情况（分组区间<0.1,0.1-$0 . 2 , . . . , > 0 . 7 )$ ，红色折线表示各组的戒断成功率。
+
+结果显示，QOI<0.2的群体戒断成功率超过70%，而QOI>0.4的群体戒断成功率显著下降至25%以下（p<0.01），验证了执念强度作为戒断困难的核心预测指标。
+
+FIG.3 — RTF 与期待值的 U 型关系  
+![](images/dea08c497f8ad57705a5eded2bebbad26513e1b423084616214793c884373ce7.jpg)  
+Reality Testing Frequency vs. mean E(t). Optimal RTF ≈ 4–5/week; over-testing triggers rumination  
+表格3:现实检验频率（RTF）与期待值的U型关系
+
+以散点图呈现RTF（次/周）与平均期待值E(t)E(t)的关系。拟合曲线显示，当RTF处于4-5次/周时，期待值达到最低点；低于此频率则缺乏现实校正，期待值偏高；高于此频率则进入反刍思维陷阱，期待值反而回升。这一U型关系验证了“反刍悖论”的存在。
+
+FIG.4— WIC 与理性判断能力相关分析  
+![](images/67ca70d75edcc2651f6cedea2093216a84a2beb1a358bb2e31cb9fa8b2c96b0d.jpg)  
+What-if Coefficient vs. Emotional Rationality Score (r = −0.67, p < 0.001, n=200).  
+表格4：“万一呢系数”（WIC）与情感理性能力的负相关
+
+基于200名参与者的数据，绘制WIC得分（0-10）与情感理性能力得分（0-10）的散点图及相关性拟合线。皮尔逊相关系数r=-0.67（p<0.001），表明“万一呢”思维倾向越强，在情感领域的理性判断能力越弱——高WIC个体更容易将普通信号解读为“可能有戏”。
+
+FIG.5—每日查看社交媒体频次  
+![](images/ebfd7f906f4d7a974aaeac6fd42202a34691a8fdce6f459bd9a15e7c76a481d0.jpg)  
+Mean daily social media checks by E(t) quintile. At E(t) > 0.8, mean = 23.7 checks/day.  
+表格5:期待值五分位数与日均社交媒体查看次数
+
+将参与者按期待值高低分为五组（0-0.2,0.2-$0 . 4 , . . . , > 0 . 8 )$ ，统计各组的日均社交媒体查看次数。
+
+数据显示，期待值最低组（<0.2）日均查看3.5次，而期待值最高组（>0.8）日均查看高达23.7次，二者呈显著正相关（r=0.83，p <0.001），揭示了“关注—期待”的正反馈循环。
+
+FIG. 6 — HOPE TRAP 触发事件构成  
+![](images/9f189feed1c4447d167bf8de58b92c0c55274ffeacf2b6aaaef191e6afe23682.jpg)  
+Intermittent reinforcement event types causing expectation clock resets.  
+表格6:间歇性强化事件类型分布
+
+基于所有记录到的间歇性强化事件，统计各类事件的发生频次。饼状图显示，“点赞”（25次）和“回复消息”（20次）是最常见的强化类型，其次是“主动联系”（15次）、“偶然相遇”10次）、“查看动态”（8次）和“其他”（7次）。这一分布为理解“希望的陷阱”的触发源提供了实证依据
+
+![](images/7fe2f8c99a02920f1173c3455e90164343e0c04ef4299d20e0145421a454182c.jpg)  
+表格7:EWDM模型预测值与实际观测值拟合效果
+
+以散点图展示312名参与者的期待值实际观测值与EWDM模型预测值的关系，对角线为完美拟合线（y=x）。数据点紧密分布在对角线两侧，模型拟合优度 $R ^ { 2 } = 0 . 8 9 ~ ( \mathrm { p } { < } 0 . 0 0 1 )$ 表明本研究所提出的期待戒断动态模型具有良好的预测效度。
+
+FIG.8 — 理性概率 VS 实际查看行为  
+![](images/f058313ba66e48b7cc2748891d2b557678dc04dcf9f7fba6c17f196db7bc747d.jpg)  
+83.6% of participants maintained high-frequency checking even when success probability < 5%  
+表格8:感知成功概率与社交媒体查看行为的负相关
+
+将参与者按对“最终能走到一起”的感知概率分组（<1%，1-5%,...,>50%），统计各组的日均查看次数及高频查看者（>20次/天）占比。
+
+结果显示，感知概率<1%的群体日均查看22.5次（高频占比40%），而感知概率>50%的群体日均仅查看5.5次（高频占比10%），揭示了一个反直觉现象：越是觉得“不可能”，越难以停止关注。
+
+FIG.9—记忆玫瑰色滤镜效应强度  
+![](images/3aa736fc78cb5177d6a0fd25cd2f4997f3e8060de6cb6986cc3fe148ad4d3c92.jpg)  
+Positive vs. negative memory retrieval ratio by QOI group. High-QOI filters rejection signals.  
+表格9:不同QOI分组的记忆提取偏差对比
+
+将参与者按QOI分为三组 $( < 0 . 2 , 0 . 2 \mathrm { - } 0 . 6 , > 0 . 6 )$ ，统计各组每日提取的积极记忆与消极记忆的平均数量。
+
+数据显示，高Q0I组（>0.6）积极记忆提取量（5.3次/天）显著高于消极记忆（0.3次/天），而低QOI组（<0.2）二者基本持平（1.3vs.1.2），验证了“记忆的玫瑰色滤镜效应”随执念强度增强而加剧。
+
+![](images/7e9885c55e9dd15a0952656a7b97d96303c389b3b6fcb4bc4696364912be448a.jpg)  
+表格10:期待戒断的三类典型相位轨迹
+
+基于30天追踪数据，聚类识别出三类典型的期待演化轨迹：快速戒断型（绿色）、希望陷阱型（红色）和慢性振荡型（橙色虚线）。
+
+快速戒断型呈现持续下降趋势；希望陷阱型在D9、D17、D21出现多次重置峰值；慢性振荡型则在0.3-0.7区间持续波动，始终无法完成戒断。这一分类为个性化干预策略的制定提供了依据。
+
+## IX. MATERIALS AND METHODS /材料与方法
+
+## 9.1. 希望的陷阱：概念化与论证
+
+本研究采用混合方法设计，结合定量追踪研究与定性深度访谈，旨在全面揭示期待戒断的动态过程及其心理机制。研究流程分为三个阶段：
+
+1. 第一阶段（筛选与基线测量）：通过在线平台招募自我报告“明知不可能但仍在期待”的成年参与者。纳入标准包括：(1)年龄18-35岁；(2)当前处于“单方面期待”状态超过3个月；(3)理性层面认同“此人不可得”；(4)自愿完成45天追踪。排除标准包括：(1)当前处于正式恋爱关系中；(2)存在严重抑郁或焦虑症状（PHQ-9>15）；(3)正在接受心理咨询或治疗。最终纳入有效样本312人（女性179人，男性133人，平均年龄24.7±4.2岁）。
+
+2. 第二阶段（45天连续追踪）：参与者通过定制化手机应用每日完成简式问卷，记录以下指标：(1)当日期待强度（1-10分自评）；(2)当天是否收到对方任何形式的信号（定义为“间歇性强化事件”，详见9.3）；(3)当天是否接触到明确提醒“此人不可得”的信息（定义为“现实检验事件”）；(4)当天想到对方的次数；(5)当天查看对方社交媒体的次数。应用后台自动记录参与者的手机使用行为数据（经授权）。
+
+3. 第三阶段（深度访谈与后测）：追踪结束后，从不同期待演化轨迹的参与者中分层随机抽取36人进行半结构化访谈（每人45-60分钟），探讨其主观体验、应对策略及对“停止期待”的理解。同时完成后测量表，包括QOI、WIC、情感理性能力等。
+
+## 9.2. 参与者信息
+
+具体数据将在补充材料中呈现
+
+表1：参与者人口学特征分布(N=200)
+
+表2：核心变量描述统计
+
+表3：间歇性强化事件类型分布
+
+表4：不同QOI分组的期待演化特征
+
+## 9.3. 统计分析策略
+
+定量分析：采用R4.2.1进行数据分析。主要分析方法包括：(1)描述性统计；(2)相关分析（Pearson相关系数）；(3)多元线性回归；（4)多层线性模型（HLM）处理重复测量数据；(5)K-means聚类识别期待演化轨迹；(6)结构方程模型检验中介效应。显著性水平设定为α = 0.05。定性分析：访谈录音转录为文本后，采用主题分析法（Thematic Analysis）进行编码。两位研究者独立编码，一致性系数 Kappa = 0.84。
+
+主要编码维度包括：期待维持的原因、间歇性强化体验、现实检验策略、戒断尝试与失败、对“放下”的理解等。混合方法整合：采用“聚敛式设计”
+
+（Convergent Design），将定量发现的统计模式与定性揭示的主观体验进行对比与整合，以更全面地理解期待戒断过程。
+
+## 9.6 伦理考虑
+
+本研究涉及敏感情感话题，采取以下伦理保护措施：(1)所有数据匿名化处理，参与者以编号代替；(2)每日追踪问卷设置情绪自评选项，若参与者报告情绪低落，自动推送心理支持资源；(3)访谈由受过临床心理学训练的研究者进行，遇情绪波动及时终止并提供支持；(4)研究结束后向所有参与者提供《情感健康自助手册》及免费心理咨询资源链接。
+
+## ACKNOWLEDGMENT /致谢
+
+感谢吃喝全面基金和好友对本研究的支持与帮助。本论文深受“明明知道不会有结果，但还是深深爱着”这一人类普遍困境的启发，献给所有在半夜三点还在翻聊天记录的人。
+
+## REFERENCES
+
+[1] Festinger, L. A Theory of Cognitive Dissonance; Stanford Univ. Press: 1957.
+
+[2] Skinner, B.F. Schedules of Reinforcement; Appleton-Century-Crofts: 1957.
+
+[3] Schacter, D.L. The Seven Sins of Memory: Insights from Psychology and Cognitive Neuroscience. Am. Psychol. 1999, 54(3), 182–203.
+
+[4] Valkenburg, P.M.; Peter, J.; Schouten, A.P. Friend Networking Sites and Their Relationship to Adolescents' Well-Being and Social Self-Esteem. CyberPsychol. Behav. 2006, 9(5), 584–590.
+
+[5] Beck, A.T. Cognitive Therapy and the Emotional Disorders; International Universities Press: 1976.
+
+[6] Baumeister, R.F.; Bratslavsky, E.; Finkenauer, C.; Vohs, K.D. Bad is Stronger than Good. Rev. Gen. Psychol. 2001, 5(4), 323–370.
+
+[7] Kahneman, D.; Tversky, A. Prospect Theory: An Analysis of Decision under Risk. Econometrica 1979, 47(2), 263–291.
+
+[8] Bowlby, J. Attachment and Loss: Vol. 1. Attachment; Basic Books: 1969.
+
+[9] Ainsworth, M.D.S.; Blehar, M.C.; Waters, E.; Wall, S. Patterns of Attachment: A Psychological Study of the Strange Situation; Lawrence Erlbaum: 1978.
+
+[10] Wegner, D.M. Ironic Processes of Mental Control. Psychol. Rev. 1994, 101(1), 34–52.
+
+[11] Nolen-Hoeksema, S. The Role of Rumination in Depressive Disorders and Mixed Anxiety/Depressive Symptoms. J. Abnorm. Psychol. 2000, 109(3), 504–511.
+
+[12] Fraley, R.C.; Shaver, P.R. Adult Romantic Attachment: Theoretical Developments, Emerging Controversies, and Unanswered Questions. Rev. Gen. Psychol. 2000, 4(2), 132–154.
+
+[13] Gottman, J.M.; Levenson, R.W. The Timing of Divorce: Predicting When a Couple Will Divorce Over a 14-Year Period. J. Marriage Fam. 2000, 62(3), 737–745.
+
+Supplementary Materials / 补充材料  
+表1：参与者人口学特征分布(N=200)
+<table><tr><td rowspan=1 colspan=1>特征</td><td rowspan=1 colspan=1>类别</td><td rowspan=1 colspan=1>人数</td><td rowspan=1 colspan=1>百分比(%)</td></tr><tr><td rowspan=1 colspan=1>性别</td><td rowspan=1 colspan=1>女性</td><td rowspan=1 colspan=1>115</td><td rowspan=1 colspan=1>57.4</td></tr><tr><td rowspan=1 colspan=1></td><td rowspan=1 colspan=1>男性</td><td rowspan=1 colspan=1>85</td><td rowspan=1 colspan=1>42.6</td></tr><tr><td rowspan=1 colspan=1>年龄</td><td rowspan=1 colspan=1>18-22岁</td><td rowspan=1 colspan=1>63</td><td rowspan=1 colspan=1>31.5</td></tr><tr><td rowspan=1 colspan=1></td><td rowspan=1 colspan=1>23-26岁</td><td rowspan=1 colspan=1>79</td><td rowspan=1 colspan=1>39.5</td></tr><tr><td rowspan=1 colspan=1></td><td rowspan=1 colspan=1>27-30岁</td><td rowspan=1 colspan=1>40</td><td rowspan=1 colspan=1>20.0</td></tr><tr><td rowspan=1 colspan=1></td><td rowspan=1 colspan=1>31-35岁</td><td rowspan=1 colspan=1>18</td><td rowspan=1 colspan=1>9.0</td></tr><tr><td rowspan=1 colspan=1>受教育程度</td><td rowspan=1 colspan=1>高中/中专</td><td rowspan=1 colspan=1>15</td><td rowspan=1 colspan=1>7.5</td></tr><tr><td rowspan=1 colspan=1></td><td rowspan=1 colspan=1>本科/大专</td><td rowspan=1 colspan=1>129</td><td rowspan=1 colspan=1>64.5</td></tr><tr><td rowspan=1 colspan=1></td><td rowspan=1 colspan=1>硕士及以上</td><td rowspan=1 colspan=1>56</td><td rowspan=1 colspan=1>28.0</td></tr><tr><td rowspan=1 colspan=1>期待对象类型</td><td rowspan=1 colspan=1>前任</td><td rowspan=1 colspan=1>86</td><td rowspan=1 colspan=1>43.0</td></tr><tr><td rowspan=1 colspan=1></td><td rowspan=1 colspan=1>暗恋对象</td><td rowspan=1 colspan=1>63</td><td rowspan=1 colspan=1>31.5</td></tr><tr><td rowspan=1 colspan=1></td><td rowspan=1 colspan=1>暖昧对象</td><td rowspan=1 colspan=1>35</td><td rowspan=1 colspan=1>17.5</td></tr><tr><td rowspan=1 colspan=1></td><td rowspan=1 colspan=1>其他</td><td rowspan=1 colspan=1>16</td><td rowspan=1 colspan=1>8.0</td></tr><tr><td rowspan=1 colspan=1>期待持续时间</td><td rowspan=1 colspan=1>3-6个月</td><td rowspan=1 colspan=1>56</td><td rowspan=1 colspan=1>28.0</td></tr><tr><td rowspan=1 colspan=1></td><td rowspan=1 colspan=1>6-12个月</td><td rowspan=1 colspan=1>79</td><td rowspan=1 colspan=1>39.5</td></tr><tr><td rowspan=1 colspan=1></td><td rowspan=1 colspan=1>1-2年</td><td rowspan=1 colspan=1>43</td><td rowspan=1 colspan=1>21.5</td></tr></table>
+
+表2：核心变量描述统计
+<table><tr><td rowspan=1 colspan=1>变量</td><td rowspan=1 colspan=1>均值(M)</td><td rowspan=1 colspan=1>标准差(SD)</td><td rowspan=1 colspan=1>最小值</td><td rowspan=1 colspan=1>最大值</td></tr><tr><td rowspan=1 colspan=1>期待强度(1-10)</td><td rowspan=1 colspan=1>6.24</td><td rowspan=1 colspan=1>2.31</td><td rowspan=1 colspan=1>1</td><td rowspan=1 colspan=1>10</td></tr><tr><td rowspan=1 colspan=1>日均想到对方次数</td><td rowspan=1 colspan=1>42.7</td><td rowspan=1 colspan=1>28.3</td><td rowspan=1 colspan=1>3</td><td rowspan=1 colspan=1>156</td></tr><tr><td rowspan=1 colspan=1>日均查看社交媒体次数</td><td rowspan=1 colspan=1>14.3</td><td rowspan=1 colspan=1>8.7</td><td rowspan=1 colspan=1>0</td><td rowspan=1 colspan=1>47</td></tr><tr><td rowspan=1 colspan=1>QOI(量化执念强度)</td><td rowspan=1 colspan=1>0.37</td><td rowspan=1 colspan=1>0.21</td><td rowspan=1 colspan=1>0.02</td><td rowspan=1 colspan=1>0.95</td></tr><tr><td rowspan=1 colspan=1>WIC (万一呢系数)</td><td rowspan=1 colspan=1>5.8</td><td rowspan=1 colspan=1>2.3</td><td rowspan=1 colspan=1>0</td><td rowspan=1 colspan=1>10</td></tr><tr><td rowspan=1 colspan=1>情感理性能力</td><td rowspan=1 colspan=1>6.1</td><td rowspan=1 colspan=1>2.1</td><td rowspan=1 colspan=1>1.2</td><td rowspan=1 colspan=1>9.8</td></tr></table>
+
+表3：间歇性强化事件类型分布
+<table><tr><td rowspan=1 colspan=1>事件类型</td><td rowspan=1 colspan=1>发生总次数</td><td rowspan=1 colspan=1>占比(%)</td><td rowspan=1 colspan=1>单次事件平均期待值提升</td></tr><tr><td rowspan=1 colspan=1>点赞</td><td rowspan=1 colspan=1>687</td><td rowspan=1 colspan=1>31.2</td><td rowspan=1 colspan=1>+1.42</td></tr><tr><td rowspan=1 colspan=1>回复消息</td><td rowspan=1 colspan=1>542</td><td rowspan=1 colspan=1>24.6</td><td rowspan=1 colspan=1>+1.58</td></tr><tr><td rowspan=1 colspan=1>主动联系</td><td rowspan=1 colspan=1>368</td><td rowspan=1 colspan=1>16.7</td><td rowspan=1 colspan=1>+1.91</td></tr><tr><td rowspan=1 colspan=1>偶然相遇</td><td rowspan=1 colspan=1>241</td><td rowspan=1 colspan=1>10.9</td><td rowspan=1 colspan=1>+1.73</td></tr><tr><td rowspan=1 colspan=1>对方查看动态</td><td rowspan=1 colspan=1>198</td><td rowspan=1 colspan=1>9.0</td><td rowspan=1 colspan=1>+0.84</td></tr><tr><td rowspan=1 colspan=1>其他</td><td rowspan=1 colspan=1>167</td><td rowspan=1 colspan=1>7.6</td><td rowspan=1 colspan=1>+0.91</td></tr><tr><td rowspan=1 colspan=1>合计</td><td rowspan=1 colspan=1>2203</td><td rowspan=1 colspan=1>100</td><td rowspan=1 colspan=1>+1.42 (平均)</td></tr></table>
+
+表4：不同QOI分组的期待演化特征
+<table><tr><td rowspan=1 colspan=1>QOI分组</td><td rowspan=1 colspan=1>人数</td><td rowspan=1 colspan=1>初始期待值</td><td rowspan=1 colspan=1>结束期待值</td><td rowspan=1 colspan=1>戒断成功人数(%)</td></tr><tr><td rowspan=1 colspan=1>&lt; 0.2</td><td rowspan=1 colspan=1>44</td><td rowspan=1 colspan=1>4.2</td><td rowspan=1 colspan=1>1.8</td><td rowspan=1 colspan=1>31(70.5%)</td></tr><tr><td rowspan=1 colspan=1>0.2-0.4</td><td rowspan=1 colspan=1>62</td><td rowspan=1 colspan=1>5.8</td><td rowspan=1 colspan=1>3.4</td><td rowspan=1 colspan=1>28(45.2%)</td></tr><tr><td rowspan=1 colspan=1>0.4-0.6</td><td rowspan=1 colspan=1>51</td><td rowspan=1 colspan=1>7.1</td><td rowspan=1 colspan=1>5.2</td><td rowspan=1 colspan=1>12(23.5%)</td></tr><tr><td rowspan=1 colspan=1>&gt; 0.6</td><td rowspan=1 colspan=1>43</td><td rowspan=1 colspan=1>8.4</td><td rowspan=1 colspan=1>6.9</td><td rowspan=1 colspan=1>4(9.3%)</td></tr><tr><td rowspan=1 colspan=1>QOI分组</td><td rowspan=1 colspan=1>人数</td><td rowspan=1 colspan=1>初始期待值</td><td rowspan=1 colspan=1>结束期待值</td><td rowspan=1 colspan=1>戒断成功人数(%)</td></tr></table>
+
+注：戒断成功定义为30天追踪结束时期待值≤2分且连续7天无反弹
