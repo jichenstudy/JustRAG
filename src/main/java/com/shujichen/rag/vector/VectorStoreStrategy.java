@@ -29,9 +29,9 @@ public interface VectorStoreStrategy {
     VectorStore getVectorStore(KnowledgeBase knowledgeBase);
 
     /**
-     * 根据嵌入模型ID和集合名称获取或创建 VectorStore
+     * 根据向量模型ID和集合名称获取或创建 VectorStore
      *
-     * @param embeddingModelId 嵌入模型 ID
+     * @param embeddingModelId 向量模型 ID
      * @param collectionName   集合名称
      * @return VectorStore 实例
      */

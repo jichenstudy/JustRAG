@@ -39,10 +39,11 @@ public abstract class AbstractVectorStoreStrategy implements VectorStoreStrategy
     /**
      * 获取或创建 VectorStore（模板方法，子类可覆写）
      *
-     * @param embeddingModelId 嵌入模型ID
+     * @param embeddingModelId 向量模型ID
      * @param collectionName   集合名称
      * @return VectorStore 实例
      */
+    @Override
     public VectorStore getOrCreateVectorStore(Long embeddingModelId, String collectionName) {
         VectorStore cached = vectorStoreCache.get(collectionName);
         if (cached != null) {
@@ -57,14 +58,15 @@ public abstract class AbstractVectorStoreStrategy implements VectorStoreStrategy
      * @param knowledgeBase 知识库
      * @return VectorStore 实例
      */
+    @Override
     public VectorStore getVectorStore(KnowledgeBase knowledgeBase) {
-        return getOrCreateVectorStore(knowledgeBase.getModelId(), knowledgeBase.getCollectionsName());
+        return getOrCreateVectorStore(knowledgeBase.getEmbeddingModelId(), knowledgeBase.getCollectionsName());
     }
 
     /**
      * 创建 VectorStore（由子类实现具体的创建逻辑）
      *
-     * @param embeddingModelId 嵌入模型ID
+     * @param embeddingModelId 向量模型ID
      * @param collectionName   集合名称
      * @return VectorStore 实例
      */
@@ -73,17 +75,17 @@ public abstract class AbstractVectorStoreStrategy implements VectorStoreStrategy
     /**
      * 获取 EmbeddingModel
      *
-     * @param embeddingModelId 嵌入模型ID
+     * @param embeddingModelId 向量模型ID
      * @return EmbeddingModel 实例
      */
     protected EmbeddingModel getEmbeddingModel(Long embeddingModelId) {
         AiModelConfig modelConfig = aiModelConfigService.getModelConfigById(embeddingModelId);
         if (modelConfig == null) {
-            throw new IllegalArgumentException("嵌入模型配置不存在，模型 ID: " + embeddingModelId);
+            throw new IllegalArgumentException("向量模型配置不存在，模型 ID: " + embeddingModelId);
         }
         EmbeddingModel model = embeddingModelFactory.createEmbeddingModel(modelConfig);
         if (model == null) {
-            throw new IllegalStateException("创建嵌入模型失败，模型 ID: " + embeddingModelId);
+            throw new IllegalStateException("创建向量模型失败，模型 ID: " + embeddingModelId);
         }
         return model;
     }
@@ -91,7 +93,7 @@ public abstract class AbstractVectorStoreStrategy implements VectorStoreStrategy
     /**
      * 获取向量维度
      *
-     * @param embeddingModelId 嵌入模型ID
+     * @param embeddingModelId 向量模型ID
      * @return 向量维度
      */
     protected int getEmbeddingDimension(Long embeddingModelId) {

@@ -38,11 +38,10 @@ export const documentApi = {
   },
 
   // 上传文档
-  upload(file: File, knowledgeBaseId: string, isParse: boolean): Promise<Result<number>> {
+  upload(files: File[], knowledgeBaseId: string): Promise<Result<Array<{ fileId: string; fileName: string; success: boolean; error?: string }>>> {
     const formData = new FormData()
-    formData.append('file', file)
+    files.forEach(file => formData.append('files', file))
     formData.append('knowledgeBaseId', knowledgeBaseId.toString())
-    formData.append('isParse', isParse.toString())
 
     return request.post('/document/upload', formData, {
       headers: {

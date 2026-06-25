@@ -91,16 +91,16 @@ public class MinerUResultParser {
 
             // 处理图片上传（在临时文件清理前）
             try {
-//                String baseDir = extractDir.toString();
-//                MarkdownImageUploader.ImageUploadResult imageResult = MarkdownImageUploader.processMarkdown(result.getFullContent(), baseDir);
-//
-//                if (imageResult.getUploadedCount() > 0) {
-//                    result.setFullContent(imageResult.getProcessedMarkdown());
-//                    log.info("✅ 已处理并上传 {} 张图片到OSS", imageResult.getUploadedCount());
-//                } else if (imageResult.hasErrors()) {
-//                    log.warn("⚠️ 图片处理有 {} 个错误", imageResult.getErrors().size());
-//                    imageResult.getErrors().forEach(error -> log.warn("  - {}", error));
-//                }
+                String baseDir = extractDir.toString();
+                MarkdownImageUploader.ImageUploadResult imageResult = MarkdownImageUploader.processMarkdown(result.getFullContent(), baseDir);
+
+                if (imageResult.getUploadedCount() > 0) {
+                    result.setFullContent(imageResult.getProcessedMarkdown());
+                    log.info("✅ 已处理并上传 {} 张图片到OSS", imageResult.getUploadedCount());
+                } else if (imageResult.hasErrors()) {
+                    log.warn("⚠️ 图片处理有 {} 个错误", imageResult.getErrors().size());
+                    imageResult.getErrors().forEach(error -> log.warn("  - {}", error));
+                }
             } catch (Exception e) {
                 log.warn("⚠️ 图片处理过程中出现异常: {}", e.getMessage());
             }

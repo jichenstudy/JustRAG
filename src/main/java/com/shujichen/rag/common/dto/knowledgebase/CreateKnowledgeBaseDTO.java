@@ -21,9 +21,14 @@ public class CreateKnowledgeBaseDTO {
     private String description;
 
     /**
-     * AI模型ID
+     * 向量模型ID
      */
-    private Long modelId;
+    private Long embeddingModelId;
+
+    /**
+     * 视觉模型ID
+     */
+    private Long visionModelId;
 
     /**
      * 切分策略：SMART 结构感知 / FIXED 固定长度

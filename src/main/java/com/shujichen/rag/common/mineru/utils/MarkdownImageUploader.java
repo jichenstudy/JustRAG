@@ -34,7 +34,7 @@ public class MarkdownImageUploader {
      * Markdown 图片引用的正则表达式
      * 匹配 ![alt](url) 和 <img src="url"> 格式
      */
-    private static final Pattern IMAGE_PATTERN = Pattern.compile(
+    public static final Pattern IMAGE_PATTERN = Pattern.compile(
         "(?:" +
             "!\\[([^\\]]*)\\]\\(([^)]+)\\)" +  // ![alt](url) 格式
             "|" +

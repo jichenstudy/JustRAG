@@ -7,7 +7,7 @@
   >
     <div class="page-header">
       <h1>AI模型配置</h1>
-      <p class="header-desc">配置你的聊天模型和嵌入模型</p>
+      <p class="header-desc">配置你的聊天/向量/视觉模型</p>
     </div>
 
     <!-- Tab切换 -->
@@ -220,12 +220,12 @@
         </div>
       </n-tab-pane>
 
-      <!-- 嵌入模型Tab -->
-      <n-tab-pane name="embedding" tab="嵌入模型">
+      <!-- 向量模型Tab -->
+      <n-tab-pane name="embedding" tab="向量模型">
         <div class="tab-content">
           <p class="section-desc">用于文档向量化和语义搜索</p>
           <div class="provider-cards">
-            <!-- OpenAI 嵌入模型 -->
+            <!-- OpenAI 向量模型 -->
             <div
               class="provider-card"
               :class="getCardClass('OPENAI', 'EMBEDDING')"
@@ -254,7 +254,7 @@
               </div>
             </div>
 
-            <!-- Ollama 嵌入模型 -->
+            <!-- Ollama 向量模型 -->
             <div
               class="provider-card"
               :class="getCardClass('OLLAMA', 'EMBEDDING')"
@@ -283,7 +283,7 @@
               </div>
             </div>
 
-            <!-- DashScope 嵌入模型 -->
+            <!-- DashScope 向量模型 -->
             <div
               class="provider-card"
               :class="getCardClass('DASHSCOPE', 'EMBEDDING')"
@@ -312,7 +312,7 @@
               </div>
             </div>
 
-            <!-- Azure OpenAI 嵌入模型 -->
+            <!-- Azure OpenAI 向量模型 -->
             <div
               class="provider-card"
               :class="getCardClass('AZURE_OPENAI', 'EMBEDDING')"
@@ -341,7 +341,7 @@
               </div>
             </div>
 
-            <!-- 智谱AI 嵌入模型 -->
+            <!-- 智谱AI 向量模型 -->
             <div
               class="provider-card"
               :class="getCardClass('ZHIPU', 'EMBEDDING')"
@@ -358,6 +358,188 @@
               </div>
               <div class="card-status">
                 <n-tag v-if="getProviderInfo('ZHIPU', 'EMBEDDING').isConfigured" type="success" size="small">
+                  <template #icon>
+                    <n-icon :component="CheckmarkCircle" />
+                  </template>
+                  已配置
+                </n-tag>
+                <n-tag v-else type="default" size="small">未配置</n-tag>
+              </div>
+              <div class="card-footer">
+                <n-icon :component="ChevronForward" :size="20" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </n-tab-pane>
+
+      <!-- 视觉模型Tab -->
+      <n-tab-pane name="vision" tab="视觉模型">
+        <div class="tab-content">
+          <p class="section-desc">用于图像理解和多模态处理</p>
+          <div class="provider-cards">
+            <!-- OpenAI 视觉模型 -->
+            <div
+              class="provider-card"
+              :class="getCardClass('OPENAI', 'VISION')"
+              @click="handleConfigProvider('OPENAI', 'VISION')"
+            >
+              <div class="card-header">
+                <div class="provider-icon openai">
+                  <n-icon :component="Code" :size="32" />
+                </div>
+                <div class="provider-info">
+                  <h3>OpenAI Vision</h3>
+                  <p class="provider-desc">GPT-4 Vision 等视觉模型</p>
+                </div>
+              </div>
+              <div class="card-status">
+                <n-tag v-if="getProviderInfo('OPENAI', 'VISION').isConfigured" type="success" size="small">
+                  <template #icon>
+                    <n-icon :component="CheckmarkCircle" />
+                  </template>
+                  已配置
+                </n-tag>
+                <n-tag v-else type="default" size="small">未配置</n-tag>
+              </div>
+              <div class="card-footer">
+                <n-icon :component="ChevronForward" :size="20" />
+              </div>
+            </div>
+
+            <!-- Ollama 视觉模型 -->
+            <div
+              class="provider-card"
+              :class="getCardClass('OLLAMA', 'VISION')"
+              @click="handleConfigProvider('OLLAMA', 'VISION')"
+            >
+              <div class="card-header">
+                <div class="provider-icon ollama">
+                  <n-icon :component="Server" :size="32" />
+                </div>
+                <div class="provider-info">
+                  <h3>Ollama Vision</h3>
+                  <p class="provider-desc">llava, bakllava 等</p>
+                </div>
+              </div>
+              <div class="card-status">
+                <n-tag v-if="getProviderInfo('OLLAMA', 'VISION').isConfigured" type="success" size="small">
+                  <template #icon>
+                    <n-icon :component="CheckmarkCircle" />
+                  </template>
+                  已配置
+                </n-tag>
+                <n-tag v-else type="default" size="small">未配置</n-tag>
+              </div>
+              <div class="card-footer">
+                <n-icon :component="ChevronForward" :size="20" />
+              </div>
+            </div>
+
+            <!-- DashScope 视觉模型 -->
+            <div
+              class="provider-card"
+              :class="getCardClass('DASHSCOPE', 'VISION')"
+              @click="handleConfigProvider('DASHSCOPE', 'VISION')"
+            >
+              <div class="card-header">
+                <div class="provider-icon dashscope">
+                  <n-icon :component="Cloud" :size="32" />
+                </div>
+                <div class="provider-info">
+                  <h3>通义千问 Vision</h3>
+                  <p class="provider-desc">qwen-vl 系列视觉模型</p>
+                </div>
+              </div>
+              <div class="card-status">
+                <n-tag v-if="getProviderInfo('DASHSCOPE', 'VISION').isConfigured" type="success" size="small">
+                  <template #icon>
+                    <n-icon :component="CheckmarkCircle" />
+                  </template>
+                  已配置
+                </n-tag>
+                <n-tag v-else type="default" size="small">未配置</n-tag>
+              </div>
+              <div class="card-footer">
+                <n-icon :component="ChevronForward" :size="20" />
+              </div>
+            </div>
+
+            <!-- Azure OpenAI 视觉模型 -->
+            <div
+              class="provider-card"
+              :class="getCardClass('AZURE_OPENAI', 'VISION')"
+              @click="handleConfigProvider('AZURE_OPENAI', 'VISION')"
+            >
+              <div class="card-header">
+                <div class="provider-icon azure">
+                  <n-icon :component="Cloud" :size="32" />
+                </div>
+                <div class="provider-info">
+                  <h3>Azure OpenAI Vision</h3>
+                  <p class="provider-desc">GPT-4 Vision 等</p>
+                </div>
+              </div>
+              <div class="card-status">
+                <n-tag v-if="getProviderInfo('AZURE_OPENAI', 'VISION').isConfigured" type="success" size="small">
+                  <template #icon>
+                    <n-icon :component="CheckmarkCircle" />
+                  </template>
+                  已配置
+                </n-tag>
+                <n-tag v-else type="default" size="small">未配置</n-tag>
+              </div>
+              <div class="card-footer">
+                <n-icon :component="ChevronForward" :size="20" />
+              </div>
+            </div>
+
+            <!-- Anthropic 视觉模型 -->
+            <div
+              class="provider-card"
+              :class="getCardClass('ANTHROPIC', 'VISION')"
+              @click="handleConfigProvider('ANTHROPIC', 'VISION')"
+            >
+              <div class="card-header">
+                <div class="provider-icon anthropic">
+                  <n-icon :component="Code" :size="32" />
+                </div>
+                <div class="provider-info">
+                  <h3>Anthropic Claude Vision</h3>
+                  <p class="provider-desc">Claude 3 视觉能力</p>
+                </div>
+              </div>
+              <div class="card-status">
+                <n-tag v-if="getProviderInfo('ANTHROPIC', 'VISION').isConfigured" type="success" size="small">
+                  <template #icon>
+                    <n-icon :component="CheckmarkCircle" />
+                  </template>
+                  已配置
+                </n-tag>
+                <n-tag v-else type="default" size="small">未配置</n-tag>
+              </div>
+              <div class="card-footer">
+                <n-icon :component="ChevronForward" :size="20" />
+              </div>
+            </div>
+
+            <!-- 智谱AI 视觉模型 -->
+            <div
+              class="provider-card"
+              :class="getCardClass('ZHIPU', 'VISION')"
+              @click="handleConfigProvider('ZHIPU', 'VISION')"
+            >
+              <div class="card-header">
+                <div class="provider-icon zhipu">
+                  <n-icon :component="Cloud" :size="32" />
+                </div>
+                <div class="provider-info">
+                  <h3>智谱AI Vision</h3>
+                  <p class="provider-desc">GLM-4V 等视觉模型</p>
+                </div>
+              </div>
+              <div class="card-status">
+                <n-tag v-if="getProviderInfo('ZHIPU', 'VISION').isConfigured" type="success" size="small">
                   <template #icon>
                     <n-icon :component="CheckmarkCircle" />
                   </template>
@@ -556,7 +738,7 @@ const handleConfigProvider = (provider: string, modelType: string) => {
 
   const modelTypeNames = {
     'CHAT': '聊天模型',
-    'EMBEDDING': '嵌入模型'
+    'EMBEDDING': '向量模型'
   }
 
   if (existingModel) {

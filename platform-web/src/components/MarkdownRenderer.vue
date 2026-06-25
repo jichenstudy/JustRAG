@@ -6,15 +6,84 @@
 import { computed } from 'vue'
 import { marked } from 'marked'
 import hljs from 'highlight.js'
+import katex from 'katex'
 import 'highlight.js/styles/github.css'
+import 'katex/dist/katex.min.css'
 
 const props = defineProps<{
   content: string
 }>()
 
+// KaTeX 数学公式扩展
+const mathExtension = {
+  extensions: [
+    // 行内公式: $...$
+    {
+      name: 'inlineMath',
+      level: 'inline',
+      start(src: string) {
+        return src.indexOf('$')
+      },
+      tokenizer(this: any, src: string) {
+        const match = src.match(/^\$([^$\n]+?)\$/)
+        if (match) {
+          return {
+            type: 'inlineMath',
+            raw: match[0],
+            text: match[1].trim()
+          }
+        }
+      },
+      renderer(this: any, token: any) {
+        try {
+          return katex.renderToString(token.text, {
+            throwOnError: false,
+            output: 'html'
+          })
+        } catch {
+          return token.raw
+        }
+      }
+    },
+    // 块级公式: $$...$$
+    {
+      name: 'blockMath',
+      level: 'block',
+      start(src: string) {
+        return src.indexOf('$$')
+      },
+      tokenizer(this: any, src: string) {
+        const match = src.match(/^\$\$([\s\S]+?)\$\$/)
+        if (match) {
+          return {
+            type: 'blockMath',
+            raw: match[0],
+            text: match[1].trim()
+          }
+        }
+      },
+      renderer(this: any, token: any) {
+        try {
+          return katex.renderToString(token.text, {
+            throwOnError: false,
+            displayMode: true,
+            output: 'html'
+          })
+        } catch {
+          return token.raw
+        }
+      }
+    }
+  ]
+}
+
 // 配置 marked
+marked.use(mathExtension)
+
+// 配置 marked（代码高亮 + 换行 + GFM 表格等）
+// highlight 在 marked v17+ 的 TS 类型中已移除，但运行时仍生效
 marked.setOptions({
-  highlight: function (code, lang) {
+  highlight: function (code: string, lang: string) {
     if (lang && hljs.getLanguage(lang)) {
       try {
         return hljs.highlight(code, { language: lang }).value
@@ -26,12 +95,12 @@ marked.setOptions({
   },
   breaks: true,
   gfm: true
-})
+} as any)
 
 const renderedContent = computed(() => {
   if (!props.content) return ''
   try {
-    return marked(props.content)
+    return marked(props.content) as string
   } catch (e) {
     console.error('Markdown 渲染错误:', e)
     return props.content

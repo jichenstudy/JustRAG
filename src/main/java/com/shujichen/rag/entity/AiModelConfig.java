@@ -26,7 +26,7 @@ public class AiModelConfig {
     private String modelName;
 
     /**
-     * 模型类型: CHAT-聊天模型, EMBEDDING-嵌入模型
+     * 模型类型: CHAT-聊天模型, EMBEDDING-向量模型, VISION-视觉模型
      */
     private String modelType;
 

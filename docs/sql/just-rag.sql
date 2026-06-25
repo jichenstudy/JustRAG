@@ -50,7 +50,7 @@ DROP TABLE IF EXISTS `ai_model_config`;
 CREATE TABLE `ai_model_config`  (
   `id` bigint NOT NULL COMMENT 'AI大模型配置ID',
   `model_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '模型名称',
-  `model_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '模型类型 CHAT/EMBEDDING',
+  `model_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '模型类型 CHAT/EMBEDDING/VISION',
   `provider` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '提供商: DASHSCOPE, OPENAI, OLLAMA, AZURE_OPENAI',
   `api_key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '模型密钥',
   `api_endpoint` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '模型端点',
@@ -220,7 +220,8 @@ CREATE TABLE `knowledge_base`  (
   `id` bigint NOT NULL COMMENT '知识库主键ID',
   `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '知识库名称',
   `description` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '知识库描述说明',
-  `model_id` bigint NULL DEFAULT NULL COMMENT '向量化模型标识，如 text-embedding-v1',
+  `embedding_model_id` bigint NULL DEFAULT NULL COMMENT '向量模型ID',
+  `vision_model_id` bigint NULL DEFAULT NULL COMMENT '视觉模型ID',
   `collections_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'milvus文档库名称',
   `chunk_strategy` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'SMART' COMMENT '切分策略：SMART 结构感知 / FIXED 固定长度',
   `chunk_size` int NULL DEFAULT 1000 COMMENT '分片字符数',

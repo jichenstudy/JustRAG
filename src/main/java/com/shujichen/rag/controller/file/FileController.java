@@ -40,81 +40,14 @@ public class FileController {
     private final FileDetailService fileDetailService;
 
     /**
-     * 简单文件上传
-     *
-     * @param file 文件
-     * @return 文件信息
-     */
-    @Operation(summary = "上传文件")
-    @PostMapping("/upload")
-    public Result<Map<String, String>> uploadFile(
-            @Parameter(description = "文件") @RequestParam("file") MultipartFile file) {
-        try {
-            // 获取原始文件名
-            String originalFilename = file.getOriginalFilename();
-            // 生成文件扩展名
-            String extension = getExtension(originalFilename);
-            // 生成唯一文件名
-            String fileName = IdUtil.fastSimpleUUID() + extension;
-            // 获取文件内容类型
-            String contentType = file.getContentType();
-
-            // 使用 OssFactory 获取 OssClient 实例
-            OssClient ossClient = OssFactory.instance();
-
-            // 上传文件
-            UploadResult uploadResult = ossClient.uploadSuffix(
-                    file.getInputStream(),
-                    fileName,
-                    file.getSize(),
-                    contentType
-            );
-
-            // 保存文件记录到数据库
-            FileDetail fileDetail = new FileDetail()
-                    .setUrl(uploadResult.getUrl())
-                    .setSize(file.getSize())
-                    .setFilename(fileName)
-                    .setOriginalFilename(originalFilename)
-                    .setBucketName(ossClient.getBucketName())
-                    .setObjectName(uploadResult.getFilename())
-                    .setBasePath(fileName)
-                    .setPath(uploadResult.getFilename())
-                    .setExt(extension)
-                    .setContentType(contentType)
-                    .setPlatform(ossClient.getConfigKey())
-                    .setHashInfo(calculateMd5(file))
-                    .setUploadStatus(1)
-                    .setUserId(StpUtil.getLoginIdAsLong())
-                    .setCreateTime(LocalDateTime.now());
-
-            fileDetailService.insert(fileDetail);
-
-            // 返回文件信息
-            Map<String, String> fileInfo = new HashMap<>();
-            fileInfo.put("fileId", fileDetail.getId().toString());
-            fileInfo.put("fileName", fileName);
-            fileInfo.put("originalFilename", originalFilename);
-            fileInfo.put("url", uploadResult.getUrl());
-            fileInfo.put("size", String.valueOf(file.getSize()));
-            fileInfo.put("contentType", contentType);
-
-            return Result.success(fileInfo);
-        } catch (Exception e) {
-            log.error("上传文件失败", e);
-            return Result.error(e.getMessage());
-        }
-    }
-
-    /**
-     * 批量文件上传
+     * 文件上传
      *
      * @param files 文件列表
      * @return 文件信息列表
      */
-    @Operation(summary = "批量上传文件")
-    @PostMapping("/upload/batch")
-    public Result<List<Map<String, String>>> uploadFiles(
+    @Operation(summary = "上传文件")
+    @PostMapping("/upload")
+    public Result<List<Map<String, String>>> uploadFile(
             @Parameter(description = "文件列表") @RequestParam("files") List<MultipartFile> files) {
         try {
             List<Map<String, String>> fileInfos = files.stream()

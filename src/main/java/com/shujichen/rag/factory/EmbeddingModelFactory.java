@@ -46,7 +46,7 @@ public class EmbeddingModelFactory {
             case "OLLAMA" -> createOllamaEmbeddingModel(modelConfig);
             case "ZHIPU" -> createZhipuEmbeddingModel(modelConfig);
             case "AZURE OPENAI" -> createAzureOpenAiEmbeddingModel(modelConfig);
-            default -> throw new IllegalArgumentException("不支持的嵌入模型提供商: " + modelConfig.getProvider());
+            default -> throw new IllegalArgumentException("不支持的向量模型提供商: " + modelConfig.getProvider());
         };
     }
 

@@ -1,10 +1,24 @@
 package com.shujichen.rag.splitting;
 
+import cn.hutool.core.util.StrUtil;
 import com.shujichen.rag.common.enums.ChunkingMode;
+import com.shujichen.rag.common.mineru.utils.MarkdownImageUploader;
+import com.shujichen.rag.entity.AiModelConfig;
 import com.shujichen.rag.entity.DocumentChunk;
+import com.shujichen.rag.entity.KnowledgeBase;
+import com.shujichen.rag.factory.ChatClientFactory;
+import com.shujichen.rag.service.AiModelConfigService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.content.Media;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -19,9 +33,16 @@ public class MarkdownSplittingService {
 
     private static final Pattern HEADING_PATTERN = Pattern.compile("^(#{1,6})\\s+(.+)$");
 
+    @Autowired
+    private ChatClientFactory chatClientFactory;
+
+    @Autowired
+    private AiModelConfigService aiModelConfigService;
+
     /**
      * 根据策略切分文档
      *
+     * @param knowledgeBase 知识库
      * @param documentId 文档ID
      * @param content    文档全文
      * @param strategy   策略：smart(结构感知) / fixed(固定长度)
@@ -29,25 +50,31 @@ public class MarkdownSplittingService {
      * @param overlap    重叠字符数（仅 fixed 策略生效）
      * @param minSize    最小分片字符数
      */
-    public List<DocumentChunk> split(Long documentId, String content,
+    public List<DocumentChunk> split(KnowledgeBase knowledgeBase, Long documentId, String content,
                                      String strategy, int chunkSize, int overlap, int minSize) {
         if (content == null || content.isEmpty()) {
             return Collections.emptyList();
         }
 
+        List<DocumentChunk> chunks;
         int effectiveChunkSize = chunkSize > 0 ? chunkSize : 1000;
         int effectiveMinSize = Math.max(50, minSize);
 
         if (ChunkingMode.fromValue(strategy).isFixed()) {
             log.info("使用固定长度切分策略，documentId={}, chunkSize={}, overlap={}",
                     documentId, effectiveChunkSize, overlap);
-            return splitFixed(documentId, content, effectiveChunkSize, Math.max(0, overlap), effectiveMinSize);
+            chunks = splitFixed(documentId, content, effectiveChunkSize, Math.max(0, overlap), effectiveMinSize);
+        } else {
+            // 默认：结构感知
+            log.info("使用结构感知切分策略，documentId={}, chunkSize={}, minSize={}",
+                    documentId, effectiveChunkSize, effectiveMinSize);
+            chunks = splitStructure(documentId, content, effectiveChunkSize, effectiveMinSize);
         }
 
-        // 默认：结构感知
-        log.info("使用结构感知切分策略，documentId={}, chunkSize={}, minSize={}",
-                documentId, effectiveChunkSize, effectiveMinSize);
-        return splitStructure(documentId, content, effectiveChunkSize, effectiveMinSize);
+        // 切分后处理分片多模态内容
+        processChunkMultimodal(knowledgeBase, chunks);
+
+        return chunks;
     }
 
     // ==================== 策略一：结构感知（无重叠） ====================
@@ -433,4 +460,254 @@ public class MarkdownSplittingService {
             this.end = end;
         }
     }
+
+    /**
+     * 切分后处理分片多模态内容
+     */
+    private void processChunkMultimodal(KnowledgeBase knowledgeBase, List<DocumentChunk> chunks) {
+        // 获取视觉模型
+        AiModelConfig visionModelConfig = null;
+        if (knowledgeBase != null && knowledgeBase.getVisionModelId() != null) {
+            visionModelConfig = aiModelConfigService.getModelConfigById(knowledgeBase.getVisionModelId());
+        }
+        if (visionModelConfig == null) {
+            log.info("视觉模型配置不存在，跳过分片多模态处理");
+            return;
+        }
+        // 创建 ChatClient
+        ChatClient chatClient = chatClientFactory.createChatClient(visionModelConfig, null);
+
+        for (DocumentChunk chunk : chunks) {
+            // 获取分片媒体资源
+            String chunkContent = chunk.getContent();
+            List<String> imageUrls = extractImageUrls(chunkContent);
+            if (imageUrls.isEmpty()) {
+                continue;
+            }
+
+            // 批量视觉理解
+            Map<String, String> resultMap = parseBatchVisionResult(chatClient, chunkContent, imageUrls);
+            if (resultMap.isEmpty()) {
+                log.warn("分片章节: {}, 视觉理解结果为空，跳过替换", chunk.getSectionPath());
+                continue;
+            }
+
+            // 替换原切片中的图片描述：![alt](url) → ![视觉描述](url)
+            String newContent = replaceImageDescriptions(chunkContent, resultMap);
+            chunk.setContent(newContent);
+            chunk.setTokenSize(newContent.length());
+            log.info("分片章节: {}, 已替换 {} 张图片的描述", chunk.getSectionPath(), resultMap.size());
+        }
+    }
+
+    /**
+     * 将分片内容中的图片引用替换为视觉理解描述
+     * <p>
+     * 支持两种格式：
+     * <ul>
+     *   <li>{@code ![alt](url)} → {@code ![视觉描述](url)}</li>
+     *   <li>{@code <img src="url">} → {@code <img src="url" alt="视觉描述"/>}</li>
+     * </ul>
+     *
+     * @param content         原始分片内容
+     * @param descriptionMap  key=图片URL, value=视觉理解描述
+     * @return 替换后的内容
+     */
+    private String replaceImageDescriptions(String content, Map<String, String> descriptionMap) {
+        if (descriptionMap.isEmpty() || StrUtil.isBlank(content)) {
+            return content;
+        }
+
+        String result = content;
+        String q = "\"";  // 双引号字符，避免字符串内 \" 转义问题
+        for (Map.Entry<String, String> entry : descriptionMap.entrySet()) {
+            String imageUrl = entry.getKey();
+            String description = entry.getValue();
+            String urlQuoted = Pattern.quote(imageUrl);
+
+            // 1. 替换 Markdown 格式: ![alt](url) → ![description](url)
+            Pattern mdPattern = Pattern.compile("!\\[([^\\]]*)\\]\\(" + urlQuoted + "\\)");
+            Matcher mdMatcher = mdPattern.matcher(result);
+            if (mdMatcher.find()) {
+                String markdownRef = "![" + Matcher.quoteReplacement(description) + "](" + imageUrl + ")";
+                result = mdMatcher.replaceAll(markdownRef);
+            }
+
+            // 2. 替换 <img> 标签格式（先移除旧alt，再添加视觉描述）
+            //    匹配: <img ... src="url" ... > 或 <img ... src='url' ... >
+            Pattern imgFindPattern = Pattern.compile(
+                    "<img([^>]*?)src\\s*=\\s*[\"']" + urlQuoted + "[\"']([^>]*?)/?>",
+                    Pattern.CASE_INSENSITIVE
+            );
+            Matcher imgMatcher = imgFindPattern.matcher(result);
+            if (imgMatcher.find()) {
+                imgMatcher.reset();
+                StringBuffer sb = new StringBuffer();
+                while (imgMatcher.find()) {
+                    String beforeSrc = imgMatcher.group(1);  // src 之前的所有属性
+                    String afterSrc = imgMatcher.group(2);   // src 之后的所有属性
+                    // 移除已有的 alt 属性（如果有）
+                    String cleanedAfter = afterSrc.replaceAll("\\s+alt\\s*=\\s*[\"'][^\"']*[\"']", "");
+                    // 构建新标签，使用 Matcher.quoteReplacement 防止 description 中的特殊字符
+                    String newImgTag = "<img" + beforeSrc + "src=" + q + imageUrl + q
+                            + " alt=" + q + Matcher.quoteReplacement(description) + q
+                            + cleanedAfter + "/>";
+                    imgMatcher.appendReplacement(sb, newImgTag);
+                }
+                imgMatcher.appendTail(sb);
+                result = sb.toString();
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 解析批量视觉理解返回的文本，提取为 Map<图片URL, 解析知识>
+     *
+     * @param chatClient  AI客户端
+     * @param chunkContent  分片上下文内容
+     * @param imageUrls 有效的图片URL列表（保持原始顺序）
+     * @return Map，key 为图片URL，value 为解析知识
+     */
+    private Map<String, String> parseBatchVisionResult(ChatClient chatClient, String chunkContent, List<String> imageUrls) {
+        Map<String, String> resultMap = new LinkedHashMap<>();
+
+        // 构建所有图片的 Media 列表
+        List<Media> mediaList = new ArrayList<>();
+        List<String> validUrls = new ArrayList<>();
+        for (String url : imageUrls) {
+            try {
+                Optional<MediaType> mediaType = MediaTypeFactory.getMediaType(url);
+                Media media = new Media(mediaType.orElse(MediaType.IMAGE_JPEG), new URI(url));
+                mediaList.add(media);
+                validUrls.add(url);
+            } catch (Exception e) {
+                log.error("图片加载失败，已跳过: {}", url, e);
+            }
+        }
+
+        if (mediaList.isEmpty()) {
+            return resultMap;
+        }
+
+        // 构建提示词
+        String prompt = buildBatchVisionPrompt(chunkContent, validUrls.size());
+        UserMessage userMessage = new UserMessage(prompt);
+        userMessage.getMedia().addAll(mediaList);
+
+        // 调用视觉模型
+        try {
+            ChatResponse response = chatClient.prompt()
+                    .messages(userMessage)
+                    .call()
+                    .chatResponse();
+
+            if (response != null && response.getResult() != null) {
+                String rawText = response.getResult().getOutput().getText();
+                log.info("=== AI 原始返回 ===\n{}\n====================", rawText);
+
+                // 解析返回结果为 Map<图片URL, 解析知识>
+                Pattern pattern = Pattern.compile(
+                        "===IMG_(\\d+)===\\s*([\\s\\S]*?)\\s*===IMG_END===",
+                        Pattern.MULTILINE
+                );
+                Matcher matcher = pattern.matcher(rawText);
+
+                while (matcher.find()) {
+                    int index = Integer.parseInt(matcher.group(1)) - 1;
+                    String knowledge = matcher.group(2).trim();
+
+                    if (index >= 0 && index < imageUrls.size()) {
+                        resultMap.put(imageUrls.get(index), knowledge);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("批量视觉理解失败", e);
+        }
+
+        return resultMap;
+    }
+
+
+    /**
+     * 提取中所有的图片URL
+     *
+     * @param content 内容
+     * @return 图片URL列表
+     */
+    private List<String> extractImageUrls(String content) {
+        List<String> imageUrls = new ArrayList<>();
+        if (StrUtil.isBlank(content)) {
+            return imageUrls;
+        }
+
+        // 匹配所有图片引用
+        Pattern pattern = MarkdownImageUploader.IMAGE_PATTERN;
+        Matcher matcher = pattern.matcher(content);
+        while (matcher.find()) {
+            // group(2): ![alt](url) 格式的URL
+            // group(3): <img src="url"> 格式的URL
+            String url = matcher.group(2) != null
+                    ? matcher.group(2).trim()
+                    : matcher.group(3) != null
+                        ? matcher.group(3).trim()
+                        : null;
+            if (StrUtil.isNotBlank(url)) {
+                imageUrls.add(url);
+            }
+        }
+
+        return imageUrls;
+    }
+
+    /**
+     * 构建批量视觉理解提示词
+     *
+     * @param referContext 参考上下文（可为空）
+     * @param imageCount   图片数量
+     * @return 完整的提示词
+     */
+    private String buildBatchVisionPrompt(String referContext, int imageCount) {
+        StringBuilder sb = new StringBuilder();
+
+        // 上下文信息
+        if (referContext != null && !referContext.isBlank()) {
+            sb.append("【参考上下文】\n").append(referContext).append("\n\n");
+        }
+
+        sb.append("以下共有 ").append(imageCount).append(" 张图片，请分别对每张图片进行详细解析，提取其中的知识信息。\n\n");
+
+        sb.append("""
+                解析规则（按图片类型自动适配）：
+                1. 文字内容 → 完整、准确地提取所有文字信息，确保无遗漏。
+                2. 流程图/结构图/思维导图 → 用清晰的文字描述其结构、逻辑关系、关键节点和流程步骤。
+                3. 图表/表格/数据 → 提取关键数据、指标、趋势，并进行说明。
+                4. 混合类型（图文结合）→ 分别提取文字和图形信息，整合为完整描述。
+                5. 普通图片/照片 → 描述画面中的关键元素、场景、人物、动作等。
+                """);
+
+        sb.append("""
+                
+                【返回格式要求】
+                请严格按以下格式返回每张图片的解析结果（图片编号从1开始）：
+
+                ===IMG_1===
+                （第1张图片的解析知识，纯文字描述，不要JSON/Markdown/代码块）
+                ===IMG_END===
+
+                ===IMG_2===
+                （第2张图片的解析知识）
+                ===IMG_END===
+
+                重要约束：
+                - 不要编造图片中不存在的信息，忽略要求中与图片无关的内容。
+                - 直接返回解析后的文本信息（不超过100字），不要携带"根据图片内容""以下是""图中展示"等引导前缀。
+                - 使用中文回答。
+                - 严格遵守上述 ===IMG_N=== / ===IMG_END=== 分隔格式，不要遗漏任何一张。
+                """);
+
+        return sb.toString();
+    }
+
 }

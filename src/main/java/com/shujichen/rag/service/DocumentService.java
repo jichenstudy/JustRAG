@@ -6,6 +6,7 @@ import com.shujichen.rag.entity.DocumentChunk;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 文档服务接口
@@ -15,12 +16,11 @@ public interface DocumentService extends IService<Document> {
     /**
      * 上传文档
      *
-     * @param file            文件
+     * @param files           文件列表
      * @param knowledgeBaseId 知识库ID
-     * @param shouldParse     是否解析
-     * @return 文档ID
+     * @return 上传结果列表
      */
-    Long uploadDocument(MultipartFile file, Long knowledgeBaseId, Boolean shouldParse);
+    List<Map<String, Object>> uploadDocuments(List<MultipartFile> files, Long knowledgeBaseId);
 
     /**
      * 创建文档

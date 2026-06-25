@@ -14,9 +14,9 @@ import java.util.List;
 public interface AiModelConfigMapper extends BaseMapper<AiModelConfig> {
 
     /**
-     * 获取所有嵌入模型
+     * 获取所有向量模型
      *
-     * @return 嵌入模型列表
+     * @return 向量模型列表
      */
     @Select("SELECT * FROM ai_model_config where model_type = 'EMBEDDING'")
     List<AiModelConfig> selectEnabledModels();

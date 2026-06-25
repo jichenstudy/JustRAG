@@ -63,8 +63,13 @@ export const modelApi = {
     return request.get('/model/getAvailableChatModelConfigs')
   },
 
-  // 获取所有可用的嵌入模型配置
+  // 获取所有可用的向量模型配置
   getAvailableEmbeddingModelConfigs(): Promise<Result<AiModelConfig[]>> {
     return request.get('/model/getAvailableEmbeddingModelConfigs')
+  },
+
+  // 获取所有可用的视觉模型配置
+  getAvailableVisionModelConfigs(): Promise<Result<AiModelConfig[]>> {
+    return request.get('/model/getAvailableVisionModelConfigs')
   }
 }

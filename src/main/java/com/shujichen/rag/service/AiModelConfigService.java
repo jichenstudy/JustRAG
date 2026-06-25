@@ -65,7 +65,7 @@ public interface AiModelConfigService extends IService<AiModelConfig> {
     AiModelConfig getDefaultModelConfig();
 
     /**
-     * 获取指定类型的启用模型（聊天模型或嵌入模型）
+     * 获取指定类型的启用模型（聊天模型或向量模型）
      *
      * @param modelType CHAT 或 EMBEDDING
      * @return 模型配置
@@ -85,4 +85,11 @@ public interface AiModelConfigService extends IService<AiModelConfig> {
      * @return 可用的向量模型配置
      */
     List<AiModelConfigDTO> getAvailableEmbeddingModelConfigs();
+
+    /**
+     * 获取所有可用的视觉模型配置
+     *
+     * @return 可用的视觉模型配置
+     */
+    List<AiModelConfigDTO> getAvailableVisionModelConfigs();
 }

@@ -355,7 +355,7 @@ public class ChatServiceImpl implements ChatService {
                         .content();
             }
 
-            // 获取知识库对应的 VectorStore（包含对应的嵌入模型和collection）
+            // 获取知识库对应的 VectorStore（包含对应的向量模型和collection）
             VectorStore vectorStore = vectorStoreStrategyFactory.getStrategy().getVectorStore(knowledgeBase);
             if (vectorStore == null) {
                 log.warn("VectorStore 不可用，collection: {}，将使用普通聊天模式",

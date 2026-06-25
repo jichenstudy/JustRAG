@@ -81,7 +81,7 @@ public class AiModelConfigServiceImpl extends ServiceImpl<AiModelConfigMapper, A
 
         aiModelConfigMapper.updateById(existingConfig);
 
-        // 清除该模型的 VectorStore 缓存（因为嵌入模型可能已改变）
+        // 清除该模型的 VectorStore 缓存（因为向量模型可能已改变）
         // TODO: 需要查看当前模型是否已被数据库绑定
         // VectorStoreStrategyFactory factory = vectorStoreStrategyFactoryProvider.getIfAvailable();
         // if (factory != null) {
@@ -146,7 +146,7 @@ public class AiModelConfigServiceImpl extends ServiceImpl<AiModelConfigMapper, A
             return null;
         }
         AiModelConfig config = enabledModels.get(0);
-        log.warn("使用的嵌入模型: {}", config.getModelName());
+        log.warn("使用的向量模型: {}", config.getModelName());
         return config;
     }
 
@@ -174,6 +174,16 @@ public class AiModelConfigServiceImpl extends ServiceImpl<AiModelConfigMapper, A
     public List<AiModelConfigDTO> getAvailableEmbeddingModelConfigs() {
         return list(new LambdaQueryWrapper<AiModelConfig>()
                 .eq(AiModelConfig::getModelType, ApiConfigModelType.EMBEDDING)
+                .eq(AiModelConfig::getUserId, StpUtil.getLoginIdAsLong()))
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AiModelConfigDTO> getAvailableVisionModelConfigs() {
+        return list(new LambdaQueryWrapper<AiModelConfig>()
+                .eq(AiModelConfig::getModelType, ApiConfigModelType.VISION)
                 .eq(AiModelConfig::getUserId, StpUtil.getLoginIdAsLong()))
                 .stream()
                 .map(this::convertToDTO)

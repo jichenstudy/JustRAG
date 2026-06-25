@@ -29,7 +29,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Long createKnowledgeBase(String name, String description, Long modelId,
+    public Long createKnowledgeBase(String name, String description, Long embeddingModelId, Long visionModelId,
                                     String chunkStrategy, Integer chunkSize,
                                     Integer chunkOverlap, Integer chunkMinSize) {
         // 检查名称是否已存在
@@ -41,14 +41,15 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
         // 创建新集合
         String collectionName = "kb_" + IdUtil.fastSimpleUUID();
-        VectorStore orCreateVectorStore = vectorStoreStrategyFactory.getStrategy().getOrCreateVectorStore(modelId, collectionName);
+        VectorStore orCreateVectorStore = vectorStoreStrategyFactory.getStrategy().getOrCreateVectorStore(embeddingModelId, collectionName);
         if (orCreateVectorStore == null) {
             throw new IllegalArgumentException("创建集合失败");
         }
         KnowledgeBase knowledgeBase = new KnowledgeBase();
         knowledgeBase.setName(name);
         knowledgeBase.setDescription(description);
-        knowledgeBase.setModelId(modelId);
+        knowledgeBase.setEmbeddingModelId(embeddingModelId);
+        knowledgeBase.setVisionModelId(visionModelId);
         knowledgeBase.setCollectionsName(collectionName);
         knowledgeBase.setChunkStrategy(chunkStrategy != null ? chunkStrategy : "smart");
         knowledgeBase.setChunkSize(chunkSize != null ? chunkSize : 1000);
@@ -66,7 +67,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateKnowledgeBase(Long id, String name, String description, Long modelId,
+    public void updateKnowledgeBase(Long id, String name, String description, Long embeddingModelId, Long visionModelId,
                                     String chunkStrategy, Integer chunkSize,
                                     Integer chunkOverlap, Integer chunkMinSize) {
         KnowledgeBase knowledgeBase = knowledgeBaseMapper.selectById(id);
@@ -87,7 +88,8 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             knowledgeBase.setDescription(description);
         }
 
-        knowledgeBase.setModelId(modelId);
+        knowledgeBase.setEmbeddingModelId(embeddingModelId);
+        knowledgeBase.setVisionModelId(visionModelId);
         if (chunkStrategy != null) knowledgeBase.setChunkStrategy(chunkStrategy);
         if (chunkSize != null) knowledgeBase.setChunkSize(chunkSize);
         if (chunkOverlap != null) knowledgeBase.setChunkOverlap(chunkOverlap);

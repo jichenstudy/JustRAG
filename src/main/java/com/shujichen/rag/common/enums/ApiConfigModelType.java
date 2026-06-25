@@ -18,7 +18,12 @@ public enum ApiConfigModelType {
     /**
      * 向量化模型
      */
-    EMBEDDING("EMBEDDING", "向量化模型");
+    EMBEDDING("EMBEDDING", "向量化模型"),
+
+    /**
+     * 视觉模型
+     */
+    VISION("VISION", "视觉模型");
 
     /**
      * 类型编码

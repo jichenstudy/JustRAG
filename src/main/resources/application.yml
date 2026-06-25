@@ -26,6 +26,12 @@ spring:
     version: @project.version@
   profiles:
     active: @profiles.active@
+  servlet:
+    multipart:
+      # 单个文件大小
+      max-file-size: 200MB
+      # 设置总上传的文件大小
+      max-request-size: 1GB
   autoconfigure:
     exclude:
       - com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeChatAutoConfiguration

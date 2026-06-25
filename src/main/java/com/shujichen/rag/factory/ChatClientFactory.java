@@ -31,6 +31,8 @@ import org.springframework.ai.zhipuai.ZhiPuAiChatOptions;
 import org.springframework.ai.zhipuai.api.ZhiPuAiApi;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+
 /**
  * ChatClient工厂类 - 根据模型配置动态创建ChatClient
  * <p>
@@ -51,6 +53,17 @@ public class ChatClientFactory {
      */
     public ChatClient createChatClient(AiModelConfig modelConfig, ChatAssistantDTO assistant) {
         log.info("创建ChatClient, 提供商: {}, 模型: {}", modelConfig.getProvider(), modelConfig.getModelName());
+
+        if (assistant == null) {
+            // 使用默认参数
+            assistant = new ChatAssistantDTO();
+            assistant.setTemperature(new BigDecimal("0.8"));
+            assistant.setMaxTokens(2048);
+            assistant.setTopP(new BigDecimal("0.9"));
+            assistant.setPresencePenalty(new BigDecimal("1.0"));
+            assistant.setFrequencyPenalty(new BigDecimal("1.0"));
+            assistant.setEnableReasoningMode(0);
+        }
 
         ChatModel chatModel = switch (modelConfig.getProvider()) {
             case "DASHSCOPE" -> createDashScopeChatModel(modelConfig, assistant);
@@ -90,8 +103,9 @@ public class ChatClientFactory {
                                 .withTemperature(assistant.getTemperature().doubleValue())
                                 .withMaxToken(assistant.getMaxTokens())
                                 .withEnableThinking(assistant.getEnableReasoningMode() == 1)
-                                .withRepetitionPenalty(assistant.getPresencePenalty().doubleValue())
+                                .withRepetitionPenalty(assistant.getPresencePenalty().doubleValue())    // 需要大于0.0
                                 .withTopP(assistant.getTopP().doubleValue())
+                                .withMultiModel(true)   // 是否多模态
                                 .build()
                 )
                 .build();

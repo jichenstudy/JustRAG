@@ -85,4 +85,13 @@ public class AiModelConfigController {
         return Result.success(configs);
     }
 
+    /**
+     * 获取所有可用的视觉模型配置
+     */
+    @GetMapping("/getAvailableVisionModelConfigs")
+    public Result<List<AiModelConfigDTO>> getAvailableVisionModelConfigs() {
+        List<AiModelConfigDTO> configs = aiModelConfigService.getAvailableVisionModelConfigs();
+        return Result.success(configs);
+    }
+
 }

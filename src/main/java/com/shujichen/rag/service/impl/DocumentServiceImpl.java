@@ -1,8 +1,12 @@
 package com.shujichen.rag.service.impl;
 
+import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shujichen.rag.common.enums.ParseStatus;
+import com.shujichen.rag.common.oss.core.OssClient;
+import com.shujichen.rag.common.oss.entity.UploadResult;
 import com.shujichen.rag.common.oss.factory.OssFactory;
 import com.shujichen.rag.entity.Document;
 import com.shujichen.rag.entity.DocumentChunk;
@@ -22,8 +26,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -37,48 +45,86 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document>
     private final VectorStoreService vectorStoreService;
     private final FileDetailService fileDetailService;
     private final MarkdownSplittingService splittingService;
+    private final DocumentParser documentParser;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Long uploadDocument(MultipartFile file, Long knowledgeBaseId, Boolean shouldParse) {
-        Long documentId = null;
-        try {
-            String docType = getDocTypeFromFilename(file.getOriginalFilename());
-            documentId = createDocument(knowledgeBaseId, "", file.getOriginalFilename(), docType);
+    public List<Map<String, Object>> uploadDocuments(List<MultipartFile> files, Long knowledgeBaseId) {
+        List<Map<String, Object>> results = new ArrayList<>();
 
-            KnowledgeBase knowledgeBase = knowledgeBaseMapper.selectById(knowledgeBaseId);
-
-            if (Boolean.TRUE.equals(shouldParse)) {
-                // 标记为解析中
-                markDocumentAsParsing(documentId);
-
-                String content = DocumentParser.parse(file);
-                List<DocumentChunk> chunks = splittingService.split(
-                        documentId,
-                        content,
-                        getChunkStrategy(knowledgeBase),
-                        getChunkSize(knowledgeBase),
-                        getChunkOverlap(knowledgeBase),
-                        getChunkMinSize(knowledgeBase));
-                saveDocumentChunks(documentId, chunks);
-                vectorStoreService.storeChunkVectors(knowledgeBase, documentId, chunks);
-            }
-
-            return documentId;
-
-        } catch (Exception e) {
-            log.error("文档上传处理失败,knowledgeBaseId: {}, filename: {}", knowledgeBaseId, file.getOriginalFilename(), e);
-
-            if (documentId != null && Boolean.TRUE.equals(shouldParse)) {
-                try {
-                    markDocumentAsParseFailed(documentId);
-                } catch (Exception ex) {
-                    log.error("标记文档解析失败时出错,documentId: {}", documentId, ex);
-                }
-            }
-
-            throw new RuntimeException("文档上传处理失败: " + e.getMessage(), e);
+        if (files == null || files.isEmpty()) {
+            return results;
         }
+
+        KnowledgeBase knowledgeBase = knowledgeBaseMapper.selectById(knowledgeBaseId);
+        if (knowledgeBase == null) {
+            throw new IllegalArgumentException("知识库不存在,ID: " + knowledgeBaseId);
+        }
+
+        for (MultipartFile file : files) {
+            Map<String, Object> result = new HashMap<>();
+            String originalFilename = file.getOriginalFilename();
+            result.put("fileName", originalFilename);
+
+            try {
+                // 1. 上传到OSS
+                String extension = originalFilename != null && originalFilename.contains(".")
+                        ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                        : "";
+                String newFileName = IdUtil.fastSimpleUUID() + extension;
+                String contentType = file.getContentType();
+
+                OssClient ossClient = OssFactory.instance();
+                UploadResult uploadResult = ossClient.uploadSuffix(
+                        file.getInputStream(), newFileName, file.getSize(), contentType);
+
+                // 2. 创建FileDetail记录
+                FileDetail fileDetail = new FileDetail()
+                        .setUrl(uploadResult.getUrl())
+                        .setSize(file.getSize())
+                        .setFilename(newFileName)
+                        .setOriginalFilename(originalFilename)
+                        .setBucketName(ossClient.getBucketName())
+                        .setObjectName(uploadResult.getFilename())
+                        .setBasePath(newFileName)
+                        .setPath(uploadResult.getFilename())
+                        .setExt(extension)
+                        .setContentType(contentType)
+                        .setPlatform(ossClient.getConfigKey())
+                        .setHashInfo(calculateMd5(file))
+                        .setUploadStatus(1)
+                        .setUserId(StpUtil.getLoginIdAsLong())
+                        .setKnowledgeBaseId(knowledgeBaseId)
+                        .setCreateTime(LocalDateTime.now());
+                fileDetailService.insert(fileDetail);
+
+                // 3. 创建Document记录
+                String fileId = fileDetail.getId().toString();
+                String docType = getDocTypeFromFilename(originalFilename);
+                Document document = new Document();
+                document.setKnowledgeBaseId(knowledgeBaseId);
+                document.setFileId(fileId);
+                document.setName(originalFilename);
+                document.setDocType(docType);
+                document.setParseStatus(ParseStatus.UPLOADED.getCode());
+                document.setChunkCount(0);
+                document.setCreatedAt(LocalDateTime.now());
+                document.setUpdatedAt(LocalDateTime.now());
+                documentMapper.insert(document);
+
+                result.put("documentId", document.getId());
+                result.put("fileId", fileId);
+                result.put("success", true);
+            } catch (Exception e) {
+                log.error("批量上传文档失败, filename: {}", originalFilename, e);
+                result.put("success", false);
+                result.put("error", e.getMessage());
+            }
+
+            results.add(result);
+        }
+
+        return results;
     }
 
     @Override
@@ -273,12 +319,11 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document>
             FileDetail fileDetail = fileDetailService.getById(document.getFileId());
             KnowledgeBase knowledgeBase = knowledgeBaseMapper.selectById(document.getKnowledgeBaseId());
 
-            String content = DocumentParser.parse(
-                    OssFactory.instance().getObjectContent(fileDetail.getObjectName()),
-                    fileDetail.getFilename());
+            String content = documentParser.parse(fileDetail);
 
             // 分片切割
             List<DocumentChunk> chunks = splittingService.split(
+                    knowledgeBase,
                     documentId,
                     content,
                     getChunkStrategy(knowledgeBase),
@@ -346,5 +391,20 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document>
 
     private int getChunkMinSize(KnowledgeBase kb) {
         return kb.getChunkMinSize() != null ? kb.getChunkMinSize() : 100;
+    }
+
+    private String calculateMd5(MultipartFile file) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(file.getBytes());
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            log.error("计算 MD5 失败", e);
+            return null;
+        }
     }
 }

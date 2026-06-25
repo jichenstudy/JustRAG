@@ -15,6 +15,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -48,16 +49,15 @@ public class DocumentController {
      * 上传文档
      *
      * @param dto 文件DTO
-     * @return 文档ID
+     * @return 上传结果列表
      */
     @PostMapping("/upload")
-    public Result<Long> uploadDocument(@ModelAttribute FileDTO dto) {
-        Long documentId = documentService.uploadDocument(
-                dto.file,
-                dto.knowledgeBaseId,
-                dto.isParse
+    public Result<List<Map<String, Object>>> uploadDocuments(@ModelAttribute FileDTO dto) {
+        List<Map<String, Object>> results = documentService.uploadDocuments(
+                dto.files,
+                dto.knowledgeBaseId
         );
-        return Result.success(documentId);
+        return Result.success(results);
     }
 
     /**

@@ -60,12 +60,21 @@
             placeholder="请输入知识库描述"
           />
         </n-form-item>
-        <n-form-item label="向量模型" path="modelId">
+        <n-form-item label="向量模型" path="embeddingModelId">
           <n-select
-            v-model:value="formData.modelId"
+            v-model:value="formData.embeddingModelId"
             :options="embeddingModels"
             :loading="loadingModels"
             placeholder="请选择向量模型"
+            clearable
+          />
+        </n-form-item>
+        <n-form-item label="视觉模型" path="visionModelId">
+          <n-select
+            v-model:value="formData.visionModelId"
+            :options="visionModels"
+            :loading="loadingVisionModels"
+            placeholder="请选择视觉模型（可选）"
             clearable
           />
         </n-form-item>
@@ -180,13 +189,16 @@ const showEditModal = ref(false)
 
 const knowledgeBases = ref<KnowledgeBase[]>([])
 const embeddingModels = ref<Array<{ label: string; value: number }>>([])
+const visionModels = ref<Array<{ label: string; value: number }>>([])
 const loadingModels = ref(false)
+const loadingVisionModels = ref(false)
 
 const formRef = ref()
 const formData = ref<CreateKnowledgeBaseDTO>({
   name: '',
   description: '',
-  modelId: undefined,
+  embeddingModelId: undefined,
+  visionModelId: undefined,
   chunkStrategy: 'SMART',
   chunkSize: 2000,
   chunkOverlap: 0,
@@ -206,7 +218,7 @@ const editFormData = ref({
 
 const rules = {
   name: { required: true, message: '请输入知识库名称', trigger: 'blur' },
-  modelId: {
+  embeddingModelId: {
     validator: (rule: any, value: any) => {
       if (!value) {
         return new Error('请选择向量模型')
@@ -283,6 +295,22 @@ const loadEmbeddingModels = async () => {
   }
 }
 
+const loadVisionModels = async () => {
+  try {
+    loadingVisionModels.value = true
+    const res = await modelApi.getAvailableVisionModelConfigs()
+    visionModels.value = res.data.map(model => ({
+      label: model.modelName,
+      value: model.id
+    }))
+  } catch (error) {
+    message.error('加载视觉模型失败')
+    console.error(error)
+  } finally {
+    loadingVisionModels.value = false
+  }
+}
+
 const handleSubmit = async () => {
   try {
     await formRef.value?.validate()
@@ -290,7 +318,7 @@ const handleSubmit = async () => {
     await knowledgeBaseApi.create(formData.value)
     message.success('创建成功')
     showCreateModal.value = false
-    formData.value = { name: '', description: '', modelId: undefined, chunkStrategy: 'SMART', chunkSize: 2000, chunkOverlap: 0, chunkMinSize: 100 }
+    formData.value = { name: '', description: '', embeddingModelId: undefined, visionModelId: undefined, chunkStrategy: 'SMART', chunkSize: 2000, chunkOverlap: 0, chunkMinSize: 100 }
     loadData()
   } catch (error) {
     message.error('创建失败')
@@ -341,12 +369,14 @@ const handleDelete = (kb: KnowledgeBase) => {
 onMounted(() => {
   loadData()
   loadEmbeddingModels()
+  loadVisionModels()
 })
 
 // 当打开创建对话框时，重新加载模型列表
 watch(showCreateModal, (newVal) => {
   if (newVal) {
     loadEmbeddingModels()
+    loadVisionModels()
   }
 })
 

@@ -9,7 +9,8 @@ export interface KnowledgeBase {
   id: string
   name: string
   description: string
-  modelId: string
+  embeddingModelId: string
+  visionModelId?: string
   chunkStrategy: string
   chunkSize: number
   chunkOverlap: number
@@ -21,7 +22,8 @@ export interface KnowledgeBase {
 export interface CreateKnowledgeBaseDTO {
   name: string
   description?: string
-  modelId?: string
+  embeddingModelId?: string
+  visionModelId?: string
   chunkStrategy?: string
   chunkSize?: number
   chunkOverlap?: number
@@ -31,7 +33,8 @@ export interface CreateKnowledgeBaseDTO {
 export interface UpdateKnowledgeBaseDTO {
   name?: string
   description?: string
-  modelId?: string
+  embeddingModelId?: string
+  visionModelId?: string
   chunkStrategy?: string
   chunkSize?: number
   chunkOverlap?: number
@@ -64,6 +67,11 @@ export interface DocumentChunk {
   content: string
   chunkIndex: number
   tokenSize: number
+  sectionPath: string | null
+  sectionTitle: string | null
+  position: number
+  charStartIndex: number
+  charEndIndex: number
   createdAt: string
 }
 

@@ -12,32 +12,34 @@ public interface KnowledgeBaseService {
     /**
      * 创建知识库
      *
-     * @param name          知识库名称
-     * @param description   知识库描述
-     * @param modelId       AI模型ID
-     * @param chunkStrategy 切分策略
-     * @param chunkSize     切分大小
-     * @param chunkOverlap  切分重叠大小
-     * @param chunkMinSize  最小切分大小
+     * @param name              知识库名称
+     * @param description       知识库描述
+     * @param embeddingModelId  向量模型ID
+     * @param visionModelId     视觉模型ID
+     * @param chunkStrategy     切分策略
+     * @param chunkSize         切分大小
+     * @param chunkOverlap      切分重叠大小
+     * @param chunkMinSize      最小切分大小
      * @return 知识库ID
      */
-    Long createKnowledgeBase(String name, String description, Long modelId,
+    Long createKnowledgeBase(String name, String description, Long embeddingModelId, Long visionModelId,
                              String chunkStrategy, Integer chunkSize,
                              Integer chunkOverlap, Integer chunkMinSize);
 
     /**
      * 更新知识库
      *
-     * @param id            知识库ID
-     * @param name          知识库名称
-     * @param description   知识库描述
-     * @param modelId       AI模型ID
-     * @param chunkStrategy 切分策略
-     * @param chunkSize     切分大小
-     * @param chunkOverlap  切分重叠大小
-     * @param chunkMinSize  最小切分大小
+     * @param id                知识库ID
+     * @param name              知识库名称
+     * @param description       知识库描述
+     * @param embeddingModelId  向量模型ID
+     * @param visionModelId     视觉模型ID
+     * @param chunkStrategy     切分策略
+     * @param chunkSize         切分大小
+     * @param chunkOverlap      切分重叠大小
+     * @param chunkMinSize      最小切分大小
      */
-    void updateKnowledgeBase(Long id, String name, String description, Long modelId,
+    void updateKnowledgeBase(Long id, String name, String description, Long embeddingModelId, Long visionModelId,
                              String chunkStrategy, Integer chunkSize,
                              Integer chunkOverlap, Integer chunkMinSize);
 

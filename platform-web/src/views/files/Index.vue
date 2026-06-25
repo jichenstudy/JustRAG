@@ -207,7 +207,7 @@
             </n-descriptions-item>
           </n-descriptions>
 
-          <!-- 文件预览 -->
+          <!-- 文件预览
           <div v-if="previewUrl" class="file-preview">
             <n-divider>文件预览</n-divider>
             <div v-if="isImageFile(currentFileDetail.ext)" class="preview-image">
@@ -220,6 +220,7 @@
               <n-text>该文件类型暂不支持在线预览</n-text>
             </div>
           </div>
+          -->
         </div>
       </n-spin>
 
@@ -389,7 +390,7 @@ import {
   deleteFiles,
   getFileDetail,
   previewFile,
-  uploadFiles,
+  uploadFile,
   type FileDetail
 } from '@/api/file'
 import { knowledgeBaseApi } from '@/api/knowledgeBase'
@@ -725,17 +726,17 @@ const handleViewDetail = async (file: FileDetail) => {
       currentFileDetail.value = res.data
 
       // 如果是可预览的文件类型，获取预览URL
-      const previewableTypes = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.txt']
-      if (res.data.ext && previewableTypes.includes(res.data.ext.toLowerCase())) {
-        try {
-          const previewRes = await previewFile(res.data.filename)
-          if (previewRes.code === 200 && previewRes.data) {
-            previewUrl.value = previewRes.data
-          }
-        } catch (error) {
-          console.error('获取预览URL失败', error)
-        }
-      }
+      // const previewableTypes = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.txt']
+      // if (res.data.ext && previewableTypes.includes(res.data.ext.toLowerCase())) {
+      //   try {
+      //     const previewRes = await previewFile(res.data.filename)
+      //     if (previewRes.code === 200 && previewRes.data) {
+      //       previewUrl.value = previewRes.data
+      //     }
+      //   } catch (error) {
+      //     console.error('获取预览URL失败', error)
+      //   }
+      // }
     } else {
       message.error('获取文件详情失败')
     }
@@ -926,7 +927,7 @@ const startUpload = async () => {
     uploadResult.value = null
 
     const fileObjects = selectedFiles.value.map(f => f.file)
-    const res = await uploadFiles(fileObjects)
+    const res = await uploadFile(fileObjects)
     if (res.code === 200 && res.data) {
       const successCount = res.data.length
       uploadStatus.value = 'completed'
