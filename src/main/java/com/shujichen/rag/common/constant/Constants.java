@@ -63,7 +63,17 @@ public interface Constants {
     /**
      * 验证码有效期（分钟）
      */
-    Integer CAPTCHA_EXPIRATION = 2;
+    Integer CAPTCHA_EXPIRATION = 5;
+
+    /**
+     * 邮箱验证码缓存 key 前缀
+     */
+    String CAPTCHA_CODE_KEY = "captcha_code:";
+
+    /**
+     * 找回密码验证码缓存 key 前缀
+     */
+    String RESET_PWD_CODE_KEY = "reset_pwd_code:";
 
     /**
      * 顶级父级id

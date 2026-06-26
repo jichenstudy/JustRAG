@@ -196,6 +196,14 @@ export interface RegisterDTO {
   email: string
   password: string
   nickname?: string
+  captchaCode: string
+}
+
+// 重置密码相关类型
+export interface ResetPasswordDTO {
+  email: string
+  captchaCode: string
+  newPassword: string
 }
 
 // 个人信息修改

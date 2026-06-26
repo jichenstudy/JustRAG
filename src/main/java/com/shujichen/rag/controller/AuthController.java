@@ -4,6 +4,7 @@ import com.shujichen.rag.common.dto.Result;
 import com.shujichen.rag.common.dto.auth.LoginDTO;
 import com.shujichen.rag.common.dto.auth.LoginUserInfo;
 import com.shujichen.rag.common.dto.auth.RegisterDTO;
+import com.shujichen.rag.common.dto.auth.ResetPasswordDTO;
 import com.shujichen.rag.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -36,6 +37,41 @@ public class AuthController {
     @PostMapping("/register")
     public Result<Boolean> register(@Validated @RequestBody RegisterDTO dto) {
         return Result.success(authService.register(dto));
+    }
+
+    /**
+     * 发送邮箱验证码
+     */
+    @PostMapping("/sendEmailCode")
+    public Result<Void> sendEmailCode(@RequestParam String email) {
+        authService.sendEmailCode(email);
+        return Result.success(null);
+    }
+
+    /**
+     * 发送找回密码验证码
+     */
+    @PostMapping("/sendResetPasswordCode")
+    public Result<Void> sendResetPasswordCode(@RequestParam String email) {
+        authService.sendResetPasswordCode(email);
+        return Result.success(null);
+    }
+
+    /**
+     * 重置密码
+     */
+    @PostMapping("/resetPassword")
+    public Result<Void> resetPassword(@Validated @RequestBody ResetPasswordDTO dto) {
+        authService.resetPassword(dto);
+        return Result.success(null);
+    }
+
+    /**
+     * 获取邮箱验证码功能是否开启
+     */
+    @GetMapping("/emailCaptchaEnabled")
+    public Result<Boolean> getEmailCaptchaEnabled() {
+        return Result.success(authService.isEmailCaptchaEnabled());
     }
 
     /**

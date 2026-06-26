@@ -27,4 +27,9 @@ public class RegisterDTO {
      * 昵称（选填）
      */
     private String nickname;
+
+    /**
+     * 邮箱验证码（当开启邮箱验证时需要）
+     */
+    private String captchaCode;
 }

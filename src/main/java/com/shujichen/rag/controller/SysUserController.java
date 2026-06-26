@@ -1,6 +1,5 @@
 package com.shujichen.rag.controller;
 
-import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.google.protobuf.ServiceException;
 import com.shujichen.rag.common.dto.Result;
 import com.shujichen.rag.common.dto.auth.UpdatePwdDTO;
@@ -33,7 +32,6 @@ public class SysUserController {
      */
     @PostMapping
     @Operation(summary = "新增用户")
-    @SaCheckPermission("sys:user:add")
     public Result<Void> addUser(@RequestBody SysUserAddAndUpdateDto sysUserAddDto) {
         sysUserService.add(sysUserAddDto);
         return Result.success();
@@ -47,7 +45,6 @@ public class SysUserController {
      */
     @PutMapping
     @Operation(summary = "修改用户")
-    @SaCheckPermission("sys:user:update")
     public Result<Void> update(@RequestBody SysUserAddAndUpdateDto user) {
         sysUserService.update(user);
         return Result.success();
@@ -61,7 +58,6 @@ public class SysUserController {
      */
     @PutMapping("/updatePwd")
     @Operation(summary = "修改密码")
-    @SaCheckPermission("sys:user:updatePwd")
     public Result<Void> updatePwd(@RequestBody UpdatePwdDTO updatePwdDTO) throws ServiceException {
         sysUserService.updatePwd(updatePwdDTO);
         return Result.success();
@@ -99,7 +95,6 @@ public class SysUserController {
      */
     @PutMapping("/reset")
     @Operation(summary = "重置密码")
-    @SaCheckPermission("sys:user:reset")
     public Result<Boolean> resetPassword(@RequestBody SysUser user) {
         return Result.success(sysUserService.resetPassword(user));
     }

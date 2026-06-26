@@ -85,7 +85,13 @@
         </div>
 
         <div class="action-section" v-if="!editing">
-          <n-button @click="startEdit">
+          <n-button type="primary" @click="openChangePasswordModal">
+            <template #icon>
+              <n-icon :component="KeyOutline" />
+            </template>
+            修改密码
+          </n-button>
+          <n-button type="primary" @click="startEdit">
             <template #icon>
               <n-icon :component="CreateOutline" />
             </template>
@@ -104,13 +110,32 @@
     <div class="profile-empty" v-else>
       <n-empty description="未登录" />
     </div>
+
+    <!-- 修改密码弹窗 -->
+    <n-modal v-model:show="showPasswordModal" preset="dialog" title="修改密码" :mask-closable="false">
+      <n-form ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-placement="left" label-width="80">
+        <n-form-item label="旧密码" path="oldPassword">
+          <n-input v-model:value="passwordForm.oldPassword" type="password" show-password-on="click" placeholder="请输入旧密码" />
+        </n-form-item>
+        <n-form-item label="新密码" path="newPassword">
+          <n-input v-model:value="passwordForm.newPassword" type="password" show-password-on="click" placeholder="请输入新密码" />
+        </n-form-item>
+        <n-form-item label="确认密码" path="confirmPassword">
+          <n-input v-model:value="passwordForm.confirmPassword" type="password" show-password-on="click" placeholder="请再次输入新密码" />
+        </n-form-item>
+      </n-form>
+      <template #action>
+        <n-button @click="showPasswordModal = false">取消</n-button>
+        <n-button type="primary" :loading="changingPassword" @click="handleChangePassword">确认修改</n-button>
+      </template>
+    </n-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
-import { NAvatar, NButton, NIcon, NEmpty, NForm, NFormItem, NInput, NRadioGroup, NRadio, useDialog, useMessage } from 'naive-ui'
-import { LogOutOutline, CreateOutline } from '@vicons/ionicons5'
+import { NAvatar, NButton, NIcon, NEmpty, NForm, NFormItem, NInput, NRadioGroup, NRadio, NModal, useDialog, useMessage, FormRules, FormInst } from 'naive-ui'
+import { LogOutOutline, CreateOutline, KeyOutline } from '@vicons/ionicons5'
 import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
 import { authApi } from '@/api/auth'
@@ -182,6 +207,68 @@ async function saveProfile() {
     message.error(error.message || '修改失败')
   } finally {
     saving.value = false
+  }
+}
+
+const showPasswordModal = ref(false)
+const changingPassword = ref(false)
+const passwordFormRef = ref<FormInst | null>(null)
+const passwordForm = reactive({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const passwordRules: FormRules = {
+  oldPassword: {
+    required: true,
+    message: '请输入旧密码',
+    trigger: 'blur'
+  },
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    {
+      validator: (_rule, value) => {
+        if (value !== passwordForm.newPassword) {
+          return new Error('两次输入的密码不一致')
+        }
+        return true
+      },
+      trigger: 'blur'
+    }
+  ]
+}
+
+function openChangePasswordModal() {
+  passwordForm.oldPassword = ''
+  passwordForm.newPassword = ''
+  passwordForm.confirmPassword = ''
+  showPasswordModal.value = true
+}
+
+async function handleChangePassword() {
+  try {
+    await passwordFormRef.value?.validate()
+  } catch (e) {
+    return
+  }
+
+  changingPassword.value = true
+  try {
+    await authApi.changePassword(passwordForm.oldPassword, passwordForm.newPassword)
+    message.success('密码修改成功，请重新登录')
+    showPasswordModal.value = false
+    setTimeout(() => {
+      authStore.logout()
+    }, 1500)
+  } catch (error: any) {
+    message.error(error.message || '密码修改失败')
+  } finally {
+    changingPassword.value = false
   }
 }
 

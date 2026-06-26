@@ -3,6 +3,7 @@ package com.shujichen.rag.service;
 import com.shujichen.rag.common.dto.auth.LoginDTO;
 import com.shujichen.rag.common.dto.auth.LoginUserInfo;
 import com.shujichen.rag.common.dto.auth.RegisterDTO;
+import com.shujichen.rag.common.dto.auth.ResetPasswordDTO;
 
 /**
  * 认证服务接口
@@ -24,6 +25,34 @@ public interface AuthService {
      * @return 注册结果
      */
     Boolean register(RegisterDTO dto);
+
+    /**
+     * 发送邮箱验证码
+     *
+     * @param email 邮箱
+     */
+    void sendEmailCode(String email);
+
+    /**
+     * 发送找回密码验证码
+     *
+     * @param email 邮箱
+     */
+    void sendResetPasswordCode(String email);
+
+    /**
+     * 重置密码
+     *
+     * @param dto 重置密码DTO
+     */
+    void resetPassword(ResetPasswordDTO dto);
+
+    /**
+     * 检查邮箱验证码功能是否开启
+     *
+     * @return true-开启，false-关闭
+     */
+    boolean isEmailCaptchaEnabled();
 
     /**
      * 检查用户名是否已存在

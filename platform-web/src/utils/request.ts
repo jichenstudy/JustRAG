@@ -25,7 +25,13 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
   (response: AxiosResponse) => {
-    return response.data
+    const res = response.data
+    if (res && typeof res === 'object' && 'code' in res) {
+      if (res.code !== 200) {
+        return Promise.reject(new Error(res.message || '请求失败'))
+      }
+    }
+    return res
   },
   (error) => {
     console.error('请求失败:', error)
