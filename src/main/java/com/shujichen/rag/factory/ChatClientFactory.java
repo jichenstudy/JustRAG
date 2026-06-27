@@ -6,7 +6,9 @@ import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
 import com.azure.ai.openai.OpenAIClientBuilder;
 import com.azure.core.credential.AzureKeyCredential;
 import com.shujichen.rag.common.dto.assistant.ChatAssistantDTO;
+import com.shujichen.rag.common.dto.chat.ProcessStepDTO;
 import com.shujichen.rag.entity.AiModelConfig;
+import com.shujichen.rag.service.tool.TraceableToolCallback;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.anthropic.AnthropicChatModel;
@@ -26,12 +28,15 @@ import org.springframework.ai.ollama.api.OllamaOptions;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.zhipuai.ZhiPuAiChatModel;
 import org.springframework.ai.zhipuai.ZhiPuAiChatOptions;
 import org.springframework.ai.zhipuai.api.ZhiPuAiApi;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * ChatClient工厂类 - 根据模型配置动态创建ChatClient
@@ -52,6 +57,18 @@ public class ChatClientFactory {
      * 根据模型配置创建ChatClient
      */
     public ChatClient createChatClient(AiModelConfig modelConfig, ChatAssistantDTO assistant) {
+        return createChatClient(modelConfig, assistant, null);
+    }
+
+    /**
+     * 根据模型配置创建ChatClient（支持工具调用追踪）
+     *
+     * @param modelConfig 模型配置
+     * @param assistant 助理配置
+     * @param eventConsumer 事件消费者（用于追踪工具调用，可为null）
+     */
+    public ChatClient createChatClient(AiModelConfig modelConfig, ChatAssistantDTO assistant,
+                                       java.util.function.Consumer<ProcessStepDTO> eventConsumer) {
         log.info("创建ChatClient, 提供商: {}, 模型: {}", modelConfig.getProvider(), modelConfig.getModelName());
 
         if (assistant == null) {
@@ -76,12 +93,27 @@ public class ChatClientFactory {
             default -> throw new IllegalArgumentException("不支持的模型提供商: " + modelConfig.getProvider());
         };
 
-        if (mcpManager.getAllToolCallbacks().isEmpty()) {
+        List<ToolCallback> toolCallbacks = mcpManager.getAllToolCallbacks();
+        if (toolCallbacks.isEmpty()) {
             return ChatClient.builder(chatModel).defaultAdvisors(new SimpleLoggerAdvisor()).build();
         }
 
+        // 如果提供了事件消费者，包装工具回调以支持追踪
+        if (eventConsumer != null) {
+            List<ToolCallback> traceableCallbacks = toolCallbacks.stream()
+                    .map(callback -> new TraceableToolCallback(callback, eventConsumer))
+                    .collect(Collectors.toList());
+            return ChatClient.builder(chatModel)
+                    .defaultToolCallbacks(traceableCallbacks.toArray(new ToolCallback[0]))
+                    .defaultAdvisors(new SimpleLoggerAdvisor())
+                    .build();
+        }
+
         // 使用 ChatModel 创建 ChatClient
-        return ChatClient.builder(chatModel).defaultToolCallbacks(mcpManager.getAllToolCallbacks()).defaultAdvisors(new SimpleLoggerAdvisor()).build();
+        return ChatClient.builder(chatModel)
+                .defaultToolCallbacks(toolCallbacks.toArray(new ToolCallback[0]))
+                .defaultAdvisors(new SimpleLoggerAdvisor())
+                .build();
     }
 
     /**

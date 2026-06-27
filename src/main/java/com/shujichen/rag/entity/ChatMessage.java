@@ -36,6 +36,11 @@ public class ChatMessage {
     private String content;
 
     /**
+     * 过程步骤（JSON格式，记录思考链路和工具调用）
+     */
+    private String processSteps;
+
+    /**
      * 消息发送或生成时间
      */
     private LocalDateTime createdAt;

@@ -90,7 +90,6 @@
       <template v-else>
         <div
           class="chat-header"
-          :style="{ borderBottom: `1px solid ${themeStore.theme.colors.border}` }"
         >
           <h2>{{ currentSession?.title || '对话' }}</h2>
         </div>
@@ -126,6 +125,13 @@
                       : themeStore.theme.colors.surface
                 }"
               >
+                <!-- 过程追踪面板 -->
+                <ProcessTracePanel
+                  v-if="showTrace && msg.role === 'ASSISTANT' && msg.processSteps && msg.processSteps.length > 0"
+                  :steps="msg.processSteps"
+                  :total-elapsed-ms="msg.totalElapsedMs"
+                />
+
                 <div v-if="msg.role === 'USER'" class="message-text">
                   {{ msg.content }}
                 </div>
@@ -148,28 +154,44 @@
 
         <div
           class="input-area"
-          :style="{ borderTop: `1px solid ${themeStore.theme.colors.border}` }"
         >
           <div class="input-wrapper">
-            <n-input
-              v-model:value="inputText"
-              type="textarea"
-              :autosize="{ minRows: 1, maxRows: 4 }"
-              :placeholder="!assistantConfigured ? '请先配置助理' : '输入消息... (Shift+Enter 换行,Enter 发送)'"
-              :disabled="sending || !assistantConfigured"
-              @keydown="handleKeyDown"
-            />
-            <n-button
-              type="primary"
-              :loading="sending"
-              :disabled="!inputText.trim() || !assistantConfigured"
-              @click="handleSend"
-            >
-              <template #icon>
-                <n-icon :component="SendOutline" />
-              </template>
-              发送
-            </n-button>
+            <div class="input-container">
+              <n-input
+                v-model:value="inputText"
+                type="textarea"
+                :autosize="{ minRows: 2, maxRows: 12 }"
+                :placeholder="!assistantConfigured ? '请先配置助理' : '输入消息...'"
+                :disabled="sending || !assistantConfigured"
+                @keydown="handleKeyDown"
+              />
+              <div class="input-actions">
+                <div class="action-left">
+                  <n-button
+                    :type="showTrace ? 'primary' : 'default'"
+                    @click="showTrace = !showTrace"
+                  >
+                    <template #icon>
+                      <img src="/src/assets/image/think.png" class="think-icon" />
+                    </template>
+                    推理过程
+                  </n-button>
+                </div>
+                <div class="action-right">
+                  <n-button
+                    type="primary"
+                    :loading="sending"
+                    :disabled="!inputText.trim() || !assistantConfigured"
+                    @click="handleSend"
+                  >
+                    <template #icon>
+                      <n-icon :component="SendOutline" />
+                    </template>
+                    发送
+                  </n-button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </template>
@@ -458,7 +480,9 @@ import {
   SettingsOutline,
   TrashOutline,
   CreateOutline,
-  HelpCircleOutline
+  HelpCircleOutline,
+  EyeOutline,
+  EyeOffOutline
 } from '@vicons/ionicons5'
 import { useThemeStore } from '@/stores/theme'
 import { assistantApi } from '@/api/assistant'
@@ -467,6 +491,7 @@ import { modelApi, type AiModelConfig } from '@/api/model'
 import { knowledgeBaseApi } from '@/api/knowledgeBase'
 import type { ChatAssistant, ChatSession, ChatMessage, KnowledgeBase } from '@/types'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
+import ProcessTracePanel from '@/components/ProcessTracePanel.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -492,6 +517,7 @@ const currentSessionId = ref<string | null>(null)
 const currentSession = ref<ChatSession | null>(null)
 const messages = ref<ChatMessage[]>([])
 const inputText = ref('')
+const showTrace = ref(localStorage.getItem('chat_showTrace') !== 'false')
 const messagesContainer = ref<HTMLElement>()
 
 const models = ref<AiModelConfig[]>([])
@@ -636,13 +662,26 @@ const loadMessages = async (sessionId: string) => {
     const res = await chatApi.getMessages(sessionId)
     const loadedMessages = res.data
 
+    // 解析历史消息中的过程步骤（JSON字符串 -> ProcessStep数组）
+    const parsedMessages = loadedMessages.map(msg => {
+      if (msg.role === 'ASSISTANT' && msg.processSteps && typeof msg.processSteps === 'string') {
+        try {
+          msg.processSteps = JSON.parse(msg.processSteps)
+        } catch (e) {
+          console.error('解析过程步骤失败:', e)
+          msg.processSteps = []
+        }
+      }
+      return msg
+    })
+
     // 检查当前是否已经有前端生成的开场白（ID为负数），并且是同一个会话
     const hasOpeningMessage = messages.value.length > 0 &&
                                messages.value[0].role === 'ASSISTANT' &&
                                messages.value[0].id.startsWith('-') &&
                                messages.value[0].sessionId === sessionId
 
-    if (loadedMessages.length === 0) {
+    if (parsedMessages.length === 0) {
       // 如果后端没有消息，显示开场白
       const openingMessage = assistant.value?.openingStatement || '你好！ 我是你的助理，有什么可以帮到你的吗？'
       messages.value = [
@@ -658,11 +697,11 @@ const loadMessages = async (sessionId: string) => {
       // 如果之前有开场白且是同一会话，保留它并追加后端消息
       messages.value = [
         messages.value[0],
-        ...loadedMessages
+        ...parsedMessages
       ]
     } else {
       // 否则直接使用后端消息
-      messages.value = loadedMessages
+      messages.value = parsedMessages
     }
 
     messagesLoading.value = false
@@ -868,7 +907,8 @@ const handleSend = async () => {
     role: 'ASSISTANT',
     content: '',
     createdAt: new Date().toISOString(),
-    streaming: true
+    streaming: true,
+    processSteps: []
   }
   messages.value.push(assistantMessage as ChatMessage)
   scrollToBottom()
@@ -879,13 +919,43 @@ const handleSend = async () => {
   try {
     eventSource = chatApi.streamChat(currentSessionId.value!, content, assistantId)
 
-    eventSource.onmessage = (event) => {
-      if (event.data && event.data.trim()) {
-        assistantMessage.content += event.data
+    // 处理步骤事件
+    eventSource.addEventListener('step', (event) => {
+      try {
+        const step = JSON.parse(event.data)
+        assistantMessage.processSteps!.push(step)
         messages.value = [...messages.value]
         scrollToBottom()
+      } catch (e) {
+        console.error('解析步骤事件失败:', e)
       }
-    }
+    })
+
+    // 处理消息内容事件
+    eventSource.addEventListener('message', (event) => {
+      try {
+        const msg = JSON.parse(event.data)
+        if (msg.content) {
+          assistantMessage.content += msg.content
+          messages.value = [...messages.value]
+          scrollToBottom()
+        }
+      } catch (e) {
+        console.error('解析消息事件失败:', e)
+      }
+    })
+
+    // 处理完成事件
+    eventSource.addEventListener('done', (event) => {
+      try {
+        const done = JSON.parse(event.data)
+        assistantMessage.totalTokens = done.totalTokens
+        assistantMessage.totalElapsedMs = done.totalElapsedMs
+        messages.value = [...messages.value]
+      } catch (e) {
+        console.error('解析完成事件失败:', e)
+      }
+    })
 
     eventSource.addEventListener('close', async () => {
       if (!streamClosed) {
@@ -969,6 +1039,11 @@ watch(showSettings, (show) => {
       maxTokens: assistant.value.maxTokens
     }
   }
+})
+
+// 持久化推理过程显示状态
+watch(showTrace, (val) => {
+  localStorage.setItem('chat_showTrace', String(val))
 })
 
 onMounted(async () => {
@@ -1200,20 +1275,66 @@ onMounted(async () => {
 }
 
 .input-area {
-  padding: 20px 24px;
+  padding: 12px 24px 20px;
   background-color: v-bind('themeStore.theme.colors.background');
 }
 
 .input-wrapper {
   max-width: 900px;
   margin: 0 auto;
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
 }
 
-.input-wrapper :deep(.n-input) {
-  flex: 1;
+.input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: v-bind('themeStore.theme.colors.surface');
+  border-radius: 16px;
+  padding: 12px 16px;
+}
+
+.input-container :deep(.n-input) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0;
+}
+
+.input-container :deep(.n-input::before),
+.input-container :deep(.n-input::after) {
+  display: none;
+}
+
+.input-container :deep(.n-input .n-input__textarea-el) {
+  font-size: 15px;
+  line-height: 1.6;
+  resize: none;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.input-container :deep(.n-input-wrapper) {
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.input-container :deep(.n-input-wrapper::before),
+.input-container :deep(.n-input-wrapper::after) {
+  display: none;
+}
+
+.input-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.think-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .markdown-preview {

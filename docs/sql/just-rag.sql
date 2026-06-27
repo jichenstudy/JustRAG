@@ -108,6 +108,7 @@ CREATE TABLE `chat_message`  (
   `session_id` bigint NOT NULL COMMENT '所属聊天会话ID，对应 chat_session.id',
   `role` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '消息角色：USER 用户 / ASSISTANT 助手',
   `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '消息内容文本',
+  `process_steps` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '过程步骤',
   `created_at` timestamp NOT NULL COMMENT '消息发送或生成时间',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_session_id`(`session_id` ASC) USING BTREE

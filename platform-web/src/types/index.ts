@@ -153,10 +153,26 @@ export interface ChatMessage {
   role: string
   content: string
   createdAt: string
+  processSteps?: ProcessStep[]
+  totalTokens?: { prompt: number; completion: number }
+  totalElapsedMs?: number
 }
 
 export interface SendMessageDTO {
   content: string
+}
+
+// 过程追踪相关类型
+export interface ProcessStep {
+  type: string
+  label?: string
+  toolName?: string
+  input?: string
+  output?: string
+  documentsCount?: number
+  elapsedMs?: number
+  content?: string
+  timestamp: number
 }
 
 // 文件相关类型

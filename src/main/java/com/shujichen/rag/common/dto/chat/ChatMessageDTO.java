@@ -31,6 +31,11 @@ public class ChatMessageDTO {
     private String content;
 
     /**
+     * 过程步骤（JSON格式，记录思考链路和工具调用）
+     */
+    private String processSteps;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createdAt;

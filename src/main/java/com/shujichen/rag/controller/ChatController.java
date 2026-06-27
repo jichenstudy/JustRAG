@@ -208,7 +208,7 @@ public class ChatController {
      * @param message     用户消息
      * @param assistantId 助理ID
      * @param token       认证Token
-     * @return 流式响应
+     * @return 流式响应（结构化SSE事件）
      */
     @GetMapping(value = "/session/{sessionId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> streamChat(
@@ -231,15 +231,6 @@ public class ChatController {
                     .build());
         }
 
-        return chatService.streamChat(sessionId, message, assistantId)
-                .map(content -> ServerSentEvent.<String>builder()
-                        .data(content)
-                        .build())
-                .concatWith(Flux.just(
-                        ServerSentEvent.<String>builder()
-                                .event("close")
-                                .data("")
-                                .build()
-                ));
+        return chatService.streamChat(sessionId, message, assistantId);
     }
 }

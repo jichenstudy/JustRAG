@@ -2,6 +2,7 @@ package com.shujichen.rag.service;
 
 import com.shujichen.rag.entity.ChatMessage;
 import com.shujichen.rag.entity.ChatSession;
+import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -116,7 +117,7 @@ public interface ChatService {
      * @param sessionId   会话ID
      * @param userMessage 用户消息
      * @param assistantId 助理ID
-     * @return 流式响应
+     * @return 流式响应（结构化SSE事件）
      */
-    Flux<String> streamChat(Long sessionId, String userMessage, Long assistantId);
+    Flux<ServerSentEvent<String>> streamChat(Long sessionId, String userMessage, Long assistantId);
 }
