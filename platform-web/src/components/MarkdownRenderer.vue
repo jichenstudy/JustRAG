@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { marked } from 'marked'
 import hljs from 'highlight.js'
 import katex from 'katex'
@@ -13,6 +13,24 @@ import 'katex/dist/katex.min.css'
 const props = defineProps<{
   content: string
 }>()
+
+// 节流渲染：使用 requestAnimationFrame 避免频密 markdown 解析
+const debouncedContent = ref(props.content)
+let rafId: number | null = null
+
+watch(
+  () => props.content,
+  (newVal) => {
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId)
+    }
+    rafId = requestAnimationFrame(() => {
+      debouncedContent.value = newVal
+      rafId = null
+    })
+  },
+  { immediate: true }
+)
 
 // KaTeX 数学公式扩展
 const mathExtension = {
@@ -98,14 +116,42 @@ marked.setOptions({
 } as any)
 
 const renderedContent = computed(() => {
-  if (!props.content) return ''
+  if (!debouncedContent.value) return ''
   try {
-    return marked(props.content) as string
+    const fixedContent = fixMarkdownTable(debouncedContent.value)
+    return marked(fixedContent) as string
   } catch (e) {
     console.error('Markdown 渲染错误:', e)
-    return props.content
+    return debouncedContent.value
   }
 })
+
+/**
+ * 修复 Markdown 表格中非法的对齐分隔符
+ * 标准语法: --- / :--- / :---: / ---:
+ * AI 模型可能生成 ::---、---:-- 等非法变体
+ */
+function fixMarkdownTable(content: string): string {
+  return content.replace(
+    /^\|[\s\S]*?\|\n\|([\s\S]*?)\|/gm,
+    (match, separator) => {
+      // 修复每个分隔单元格
+      const fixed = separator.replace(
+        /:?-{3,}:?/g,
+        (cell: string) => {
+          // 去掉多余的冒号，只保留标准格式
+          const hasLeft = cell.startsWith(':')
+          const hasRight = cell.endsWith(':')
+          if (hasLeft && hasRight) return ':---:'
+          if (hasLeft) return ':---'
+          if (hasRight) return '---:'
+          return '---'
+        }
+      )
+      return match.replace(separator, fixed)
+    }
+  )
+}
 </script>
 
 <style scoped>

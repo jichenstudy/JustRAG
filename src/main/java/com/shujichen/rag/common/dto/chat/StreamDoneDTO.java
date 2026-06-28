@@ -25,4 +25,9 @@ public class StreamDoneDTO {
      * 总耗时毫秒
      */
     private Long totalElapsedMs;
+
+    /**
+     * 保存到数据库后的消息ID
+     */
+    private Long messageId;
 }

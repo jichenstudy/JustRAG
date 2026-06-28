@@ -1,5 +1,6 @@
 package com.shujichen.rag.service.impl;
 
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -328,7 +329,10 @@ public class ChatServiceImpl implements ChatService {
         List<ProcessStepDTO> allProcessSteps = new ArrayList<>();
         allProcessSteps.add(modelInfoStep); // 添加模型信息步骤
 
-        Flux<ServerSentEvent<String>> contentStream = doStreamChatWithSteps(sessionId, userMessage, systemPrompt, topN, finalModelId, knowledgeBase, historyMessages, assistant)
+        // 捕获当前用户ID，传递给工具执行线程
+        Long currentUserId = StpUtil.getLoginIdAsLong();
+
+        Flux<ServerSentEvent<String>> contentStream = doStreamChatWithSteps(sessionId, userMessage, systemPrompt, topN, finalModelId, knowledgeBase, historyMessages, assistant, currentUserId)
                 .doOnNext(sse -> {
                     // 提取 message 事件中的内容用于保存
                     if ("message".equals(sse.event())) {
@@ -348,12 +352,36 @@ public class ChatServiceImpl implements ChatService {
                     }
                 });
 
-        // 完成后发送 done 事件
+        // 完成后发送 done 事件（先保存消息获取ID）
         Flux<ServerSentEvent<String>> doneEvent = Flux.defer(() -> {
             long elapsedMs = System.currentTimeMillis() - startTime;
+
+            // 先保存消息到数据库，获取真实ID
+            Long messageId = null;
+            try {
+                ChatMessage assistantMsg = new ChatMessage();
+                assistantMsg.setSessionId(sessionId);
+                assistantMsg.setRole(MessageRole.ASSISTANT.getCode());
+                assistantMsg.setContent(fullResponse.toString());
+
+                if (!allProcessSteps.isEmpty()) {
+                    String processStepsJson = objectMapper.writeValueAsString(allProcessSteps);
+                    assistantMsg.setProcessSteps(processStepsJson);
+                }
+
+                assistantMsg.setCreatedAt(LocalDateTime.now());
+                chatMessageMapper.insert(assistantMsg);
+                messageId = assistantMsg.getId();
+                log.info("助手消息保存成功,会话ID: {}, 消息ID: {}, 过程步骤数: {}",
+                        sessionId, messageId, allProcessSteps.size());
+            } catch (Exception e) {
+                log.error("保存助手消息失败,会话ID: {}", sessionId, e);
+            }
+
             StreamDoneDTO doneDTO = StreamDoneDTO.builder()
                     .totalTokens(new HashMap<>())
                     .totalElapsedMs(elapsedMs)
+                    .messageId(messageId)
                     .build();
             return createDoneEvent(doneDTO);
         });
@@ -361,29 +389,7 @@ public class ChatServiceImpl implements ChatService {
         return modelInfoEvent
                 .concatWith(contentStream)
                 .concatWith(doneEvent)
-                .concatWith(Flux.defer(() -> {
-                    // 在发送 close 事件前，先将消息保存到数据库（包含 processSteps），
-                    // 确保前端收到 close 后 loadMessages 能拿到完整数据
-                    try {
-                        ChatMessage assistantMsg = new ChatMessage();
-                        assistantMsg.setSessionId(sessionId);
-                        assistantMsg.setRole(MessageRole.ASSISTANT.getCode());
-                        assistantMsg.setContent(fullResponse.toString());
-
-                        if (!allProcessSteps.isEmpty()) {
-                            String processStepsJson = objectMapper.writeValueAsString(allProcessSteps);
-                            assistantMsg.setProcessSteps(processStepsJson);
-                        }
-
-                        assistantMsg.setCreatedAt(LocalDateTime.now());
-                        chatMessageMapper.insert(assistantMsg);
-                        log.info("助手消息保存成功,会话ID: {}, 消息ID: {}, 过程步骤数: {}",
-                                sessionId, assistantMsg.getId(), allProcessSteps.size());
-                    } catch (Exception e) {
-                        log.error("保存助手消息失败,会话ID: {}", sessionId, e);
-                    }
-                    return Flux.just(createCloseEvent());
-                }))
+                .concatWith(Flux.defer(() -> Flux.just(createCloseEvent())))
                 .doOnError(error -> log.error("流式对话失败,会话ID: {}", sessionId, error));
     }
 
@@ -399,7 +405,8 @@ public class ChatServiceImpl implements ChatService {
             Long chatModelId,
             KnowledgeBase knowledgeBase,
             List<Message> historyMessages,
-            ChatAssistantDTO assistant) {
+            ChatAssistantDTO assistant,
+            Long userId) {
         try {
             if (StrUtil.isBlank(systemPrompt)) {
                 log.info("使用默认系统提示词");
@@ -425,7 +432,7 @@ public class ChatServiceImpl implements ChatService {
             // 如果没有关联知识库，直接进行普通聊天
             if (knowledgeBase == null) {
                 log.info("未关联知识库，使用普通聊天模式（带记忆），conversationId: {}", conversationId);
-                return doStreamContent(chatClient, systemPrompt, currentMessage, historyMessages, toolEventsSink);
+                return doStreamContent(chatClient, systemPrompt, currentMessage, historyMessages, toolEventsSink, userId);
             }
 
             // 获取知识库对应的 VectorStore
@@ -433,7 +440,7 @@ public class ChatServiceImpl implements ChatService {
             if (vectorStore == null) {
                 log.warn("VectorStore 不可用，collection: {}，将使用普通聊天模式",
                         knowledgeBase.getCollectionsName());
-                return doStreamContent(chatClient, systemPrompt, currentMessage, historyMessages, toolEventsSink);
+                return doStreamContent(chatClient, systemPrompt, currentMessage, historyMessages, toolEventsSink, userId);
             }
 
             // RAG 检索过程
@@ -477,9 +484,19 @@ public class ChatServiceImpl implements ChatService {
                         createStepSse(retrieveEndStep)
                 );
             } else {
-                // 没有检索到相关文档，不发送检索步骤
-                retrieveEvents = Flux.empty();
-                log.info("【RAG】未检索到相关文档，跳过检索步骤显示");
+                // 知识库中未检索到相关文档，发送错误步骤
+                ProcessStepDTO emptyStep = ProcessStepDTO.builder()
+                        .type("ERROR")
+                        .label("知识库无相关内容")
+                        .content("知识库中未检索到与问题相关的文档，将使用模型自身知识回答")
+                        .elapsedMs(retrieveElapsed)
+                        .timestamp(System.currentTimeMillis())
+                        .build();
+                retrieveEvents = Flux.just(
+                        createStepSse(retrieveStartStep),
+                        createStepSse(emptyStep)
+                );
+                log.info("【RAG】未检索到相关文档，发送 ERROR 步骤");
             }
 
             // 构建带RAG上下文的用户消息
@@ -501,7 +518,7 @@ public class ChatServiceImpl implements ChatService {
 
             // 检索事件 + 内容流（包含工具调用事件）
             Flux<ServerSentEvent<String>> contentEvents = doStreamContent(
-                    chatClient, systemPrompt, userMessageWithContext, historyMessages, toolEventsSink);
+                    chatClient, systemPrompt, userMessageWithContext, historyMessages, toolEventsSink, userId);
 
             return retrieveEvents.concatWith(contentEvents);
 
@@ -516,24 +533,25 @@ public class ChatServiceImpl implements ChatService {
      */
     private Flux<ServerSentEvent<String>> doStreamContent(
             ChatClient chatClient, String systemPrompt, String userMessage,
-            List<Message> historyMessages, reactor.core.publisher.Sinks.Many<ServerSentEvent<String>> toolEventsSink) {
+            List<Message> historyMessages, reactor.core.publisher.Sinks.Many<ServerSentEvent<String>> toolEventsSink, Long userId) {
 
-        // 内容流
-        Flux<ServerSentEvent<String>> contentFlux = chatClient
-                .prompt(systemPrompt)
-                .messages(historyMessages)
-                .user(userMessage)
-                .stream()
-                .content()
-                .map(this::createMessageEvent)
-                .doFinally(signal -> {
-                    // 内容流结束后，延迟一小段时间再完成工具事件流
-                    // 确保所有工具调用事件都被发送
-                    try {
-                        Thread.sleep(200);
-                    } catch (InterruptedException ignored) {}
-                    toolEventsSink.tryEmitComplete();
-                });
+        // 使用 defer 在流订阅时（实际执行线程）设置用户上下文
+        Flux<ServerSentEvent<String>> contentFlux = Flux.defer(() -> {
+            return chatClient
+                    .prompt(systemPrompt)
+                    .messages(historyMessages)
+                    .user(userMessage)
+                    .stream()
+                    .content()
+                    .map(this::createMessageEvent)
+                    .doFinally(signal -> {
+                        // 内容流结束后，延迟一小段时间再完成工具事件流
+                        try {
+                            Thread.sleep(200);
+                        } catch (InterruptedException ignored) {}
+                        toolEventsSink.tryEmitComplete();
+                    });
+        });
 
         // 合并内容流和工具调用事件流
         return Flux.merge(

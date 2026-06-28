@@ -130,22 +130,19 @@
                   v-if="showTrace && msg.role === 'ASSISTANT' && msg.processSteps && msg.processSteps.length > 0"
                   :steps="msg.processSteps"
                   :total-elapsed-ms="msg.totalElapsedMs"
+                  :streaming="(msg as any).streaming"
                 />
 
                 <div v-if="msg.role === 'USER'" class="message-text">
                   {{ msg.content }}
                 </div>
-                <div
-                  v-else-if="(msg as any).streaming"
-                  class="message-text streaming-text"
-                >
-                  {{ msg.content }}<span class="typing-cursor">|</span>
-                </div>
-                <MarkdownRenderer
-                  v-else
-                  :content="msg.content"
-                  class="markdown-preview"
-                />
+                <template v-else>
+                  <MarkdownRenderer
+                    :content="msg.content"
+                    class="markdown-preview"
+                  />
+                  <span v-if="(msg as any).streaming" class="typing-cursor">|</span>
+                </template>
                 <div class="message-time">{{ formatTime(msg.createdAt) }}</div>
               </div>
             </div>
@@ -161,7 +158,7 @@
                 v-model:value="inputText"
                 type="textarea"
                 :autosize="{ minRows: 2, maxRows: 12 }"
-                :placeholder="!assistantConfigured ? '请先配置助理' : '输入消息...'"
+                :placeholder="inputPlaceholder"
                 :disabled="sending || !assistantConfigured"
                 @keydown="handleKeyDown"
               />
@@ -545,6 +542,12 @@ const settingsForm = ref({
 })
 
 const assistantConfigured = computed(() => assistant.value?.modelId != null)
+
+const inputPlaceholder = computed(() => {
+  if (!assistantConfigured.value) return '请先配置助理'
+  return `给 ${assistant.value?.assistantName || '助理'} 发送消息`
+})
+
 const isTemporarySession = computed(() => currentSessionId.value != null && currentSessionId.value?.startsWith('-'))
 
 const formatTime = (time: string) => {
@@ -923,7 +926,7 @@ const handleSend = async () => {
     eventSource.addEventListener('step', (event) => {
       try {
         const step = JSON.parse(event.data)
-        assistantMessage.processSteps!.push(step)
+        assistantMessage.processSteps = [...assistantMessage.processSteps!, step]
         messages.value = [...messages.value]
         scrollToBottom()
       } catch (e) {
@@ -951,6 +954,10 @@ const handleSend = async () => {
         const done = JSON.parse(event.data)
         assistantMessage.totalTokens = done.totalTokens
         assistantMessage.totalElapsedMs = done.totalElapsedMs
+        // 记录数据库中的真实消息ID，后续更新避免全量刷新
+        if (done.messageId) {
+          assistantMessage.id = String(done.messageId)
+        }
         messages.value = [...messages.value]
       } catch (e) {
         console.error('解析完成事件失败:', e)
@@ -965,10 +972,6 @@ const handleSend = async () => {
         assistantMessage.streaming = false
         messages.value = [...messages.value]
 
-        await nextTick()
-        scrollToBottom()
-
-        await loadMessages(currentSessionId.value!)
         await nextTick()
         scrollToBottom()
       }
@@ -1311,6 +1314,7 @@ onMounted(async () => {
   resize: none;
   border: none !important;
   box-shadow: none !important;
+  outline: none !important;
   background: transparent !important;
 }
 
@@ -1318,6 +1322,25 @@ onMounted(async () => {
   padding: 0 !important;
   border: none !important;
   background: transparent !important;
+  box-shadow: none !important;
+}
+
+.input-container :deep(.n-input__border),
+.input-container :deep(.n-input__state-border),
+.input-container :deep(.n-input__textarea-border) {
+  display: none !important;
+}
+
+.input-container :deep(.n-input--hovered .n-input__border),
+.input-container :deep(.n-input--hovered .n-input__state-border),
+.input-container :deep(.n-input--hovered .n-input__textarea-border),
+.input-container :deep(.n-input--focus .n-input__border),
+.input-container :deep(.n-input--focus .n-input__state-border),
+.input-container :deep(.n-input--focus .n-input__textarea-border) {
+  display: none !important;
+}
+
+.input-container :deep(.n-input--focus) {
   box-shadow: none !important;
 }
 

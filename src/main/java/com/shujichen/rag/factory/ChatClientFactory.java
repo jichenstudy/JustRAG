@@ -9,6 +9,7 @@ import com.shujichen.rag.common.dto.assistant.ChatAssistantDTO;
 import com.shujichen.rag.common.dto.chat.ProcessStepDTO;
 import com.shujichen.rag.entity.AiModelConfig;
 import com.shujichen.rag.service.tool.TraceableToolCallback;
+import com.shujichen.rag.builtin.BuiltinToolRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.anthropic.AnthropicChatModel;
@@ -35,6 +36,7 @@ import org.springframework.ai.zhipuai.api.ZhiPuAiApi;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,6 +54,7 @@ import java.util.stream.Collectors;
 public class ChatClientFactory {
 
     private final DynamicMcpManager mcpManager;
+    private final BuiltinToolRegistry builtinToolRegistry;
 
     /**
      * 根据模型配置创建ChatClient
@@ -93,7 +96,10 @@ public class ChatClientFactory {
             default -> throw new IllegalArgumentException("不支持的模型提供商: " + modelConfig.getProvider());
         };
 
-        List<ToolCallback> toolCallbacks = mcpManager.getAllToolCallbacks();
+        List<ToolCallback> toolCallbacks = new ArrayList<>();
+        toolCallbacks.addAll(mcpManager.getAllToolCallbacks());
+        toolCallbacks.addAll(builtinToolRegistry.getAllToolCallbacks());
+
         if (toolCallbacks.isEmpty()) {
             return ChatClient.builder(chatModel).defaultAdvisors(new SimpleLoggerAdvisor()).build();
         }

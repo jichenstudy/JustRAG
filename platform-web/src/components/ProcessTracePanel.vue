@@ -3,6 +3,7 @@
     <div class="panel-header" @click="toggleCollapse">
       <div class="header-left">
         <n-icon :component="isCollapsed ? ChevronDownOutline : ChevronUpOutline" :size="16" />
+        <img :src="statusIcon" class="status-icon" alt="" />
         <span class="intent-label">{{ intentLabel }}</span>
         <span class="step-count">{{ steps.length }} 个步骤</span>
         <span v-if="totalElapsedMs" class="elapsed-time">{{ formatElapsed(totalElapsedMs) }}</span>
@@ -39,6 +40,9 @@
           <div v-if="step.content && step.type === 'MODEL_INFO'" class="step-detail">
             {{ step.content }}
           </div>
+          <div v-if="step.content && step.type === 'ERROR'" class="step-detail step-error-detail">
+            {{ step.content }}
+          </div>
           <div v-if="step.type === 'TOOL_CALL_START' && step.input" class="step-detail">
             <pre class="tool-json-input">{{ formatToolInput(step.input) }}</pre>
           </div>
@@ -57,14 +61,27 @@ import {
   SearchOutline,
   BuildOutline,
   InformationCircleOutline,
-  CheckmarkCircleOutline
+  CheckmarkCircleOutline,
+  AlertCircleOutline
 } from '@vicons/ionicons5'
+import thinkIcon from '@/assets/image/think.png'
+import successIcon from '@/assets/image/success.png'
+import errorIcon from '@/assets/image/error.png'
 import type { ProcessStep } from '@/types'
 
 const props = defineProps<{
   steps: ProcessStep[]
   totalElapsedMs?: number
+  streaming?: boolean
 }>()
+
+// 状态图标：过程中 → think，完成 → success，错误 → error
+const statusIcon = computed(() => {
+  const hasError = props.steps.some(s => s.type === 'ERROR')
+  if (hasError) return errorIcon
+  if (props.streaming) return thinkIcon
+  return successIcon
+})
 
 const isCollapsed = ref(true)
 
@@ -83,6 +100,7 @@ const intentLabel = computed(() => {
 })
 
 const getStepIcon = (step: ProcessStep) => {
+  if (step.type === 'ERROR') return AlertCircleOutline
   if (step.type.startsWith('RETRIEVE')) return SearchOutline
   if (step.type.startsWith('TOOL_CALL')) return BuildOutline
   if (step.type === 'MODEL_INFO') return InformationCircleOutline
@@ -90,6 +108,7 @@ const getStepIcon = (step: ProcessStep) => {
 }
 
 const getStepColor = (step: ProcessStep) => {
+  if (step.type === 'ERROR') return '#d03050'
   if (step.type.endsWith('_END')) return '#18a058'
   if (step.type.endsWith('_START')) return '#2080f0'
   if (step.type === 'MODEL_INFO') return '#f0a020'
@@ -97,13 +116,13 @@ const getStepColor = (step: ProcessStep) => {
 }
 
 const getStepLabel = (step: ProcessStep) => {
+  if (step.type === 'ERROR') return step.label || '异常'
   if (step.type === 'RETRIEVE_START') return '知识库检索'
   if (step.type === 'RETRIEVE_END') return '检索完成'
   if (step.type === 'TOOL_CALL_START') return `调用工具: ${formatToolName(step.toolName) || '未知'}`
   if (step.type === 'TOOL_CALL_END') return `工具返回: ${formatToolName(step.toolName) || '未知'}`
   if (step.type === 'MODEL_INFO') return '模型信息'
   if (step.type === 'THINKING') return '思考过程'
-  if (step.type === 'ERROR') return '错误'
   return step.label || step.type
 }
 
@@ -163,6 +182,12 @@ const formatElapsed = (ms: number) => {
   color: #333;
 }
 
+.status-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
 .step-count {
   color: #666;
   font-size: 12px;
@@ -215,6 +240,10 @@ const formatElapsed = (ms: number) => {
   color: #666;
   font-size: 12px;
   margin-top: 2px;
+}
+
+.step-error-detail {
+  color: #d03050;
 }
 
 .tool-name-blue {
