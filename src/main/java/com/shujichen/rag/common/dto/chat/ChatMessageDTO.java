@@ -36,6 +36,11 @@ public class ChatMessageDTO {
     private String processSteps;
 
     /**
+     * 引用信息（JSON格式，记录RAG检索的文档片段）
+     */
+    private String citations;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createdAt;

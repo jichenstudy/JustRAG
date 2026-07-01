@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -189,6 +190,39 @@ public class DocumentController {
                         .build())
                 .toList();
 
+        return Result.success(dtoList);
+    }
+
+    /**
+     * 根据分片IDs批量查询分块详情（用于引用回溯）
+     *
+     * @param chunkIds 分片ID列表
+     * @return 分块详情列表（包含文档信息）
+     */
+    @PostMapping("/chunks/batch")
+    public Result<List<DocumentChunkDTO>> getChunksByIds(@RequestBody List<String> chunkIds) {
+        if (chunkIds == null || chunkIds.isEmpty()) {
+            return Result.success(new ArrayList<>());
+        }
+
+        // 将字符串ID转换为Long
+        List<Long> longIds = chunkIds.stream()
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
+
+        List<DocumentChunk> chunks = documentService.getChunksByIds(longIds);
+        List<DocumentChunkDTO> dtoList = chunks.stream()
+                .map(chunk -> {
+                    DocumentChunkDTO dto = new DocumentChunkDTO();
+                    dto.setId(String.valueOf(chunk.getId()));
+                    dto.setDocumentId(String.valueOf(chunk.getDocumentId()));
+                    dto.setContent(chunk.getContent());
+                    dto.setChunkIndex(chunk.getChunkIndex());
+                    dto.setSectionPath(chunk.getSectionPath());
+                    dto.setSectionTitle(chunk.getSectionTitle());
+                    return dto;
+                })
+                .collect(Collectors.toList());
         return Result.success(dtoList);
     }
 }

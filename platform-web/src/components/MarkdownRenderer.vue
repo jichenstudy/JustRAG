@@ -1,5 +1,5 @@
 <template>
-  <div class="markdown-body" v-html="renderedContent"></div>
+  <div class="markdown-body" v-html="renderedContent" @click="handleClick"></div>
 </template>
 
 <script setup lang="ts">
@@ -12,6 +12,11 @@ import 'katex/dist/katex.min.css'
 
 const props = defineProps<{
   content: string
+  citations?: any[]
+}>()
+
+const emit = defineEmits<{
+  (e: 'citation-click', indices: number[]): void
 }>()
 
 // 节流渲染：使用 requestAnimationFrame 避免频密 markdown 解析
@@ -119,12 +124,32 @@ const renderedContent = computed(() => {
   if (!debouncedContent.value) return ''
   try {
     const fixedContent = fixMarkdownTable(debouncedContent.value)
-    return marked(fixedContent) as string
+    let html = marked(fixedContent) as string
+    
+    // 如果有引用数据，将 [N] 或 [N,M] 格式的引用标记转换为可点击的 HTML
+    if (props.citations && props.citations.length > 0) {
+      html = html.replace(/\[(\d+(?:,\d+)*)\]/g, (match, indices) => {
+        return `<span class="citation-badge" data-indices="${indices}">[${indices}]</span>`
+      })
+    }
+    
+    return html
   } catch (e) {
     console.error('Markdown 渲染错误:', e)
     return debouncedContent.value
   }
 })
+
+const handleClick = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  if (target.classList.contains('citation-badge')) {
+    const indicesStr = target.getAttribute('data-indices')
+    if (indicesStr) {
+      const indices = indicesStr.split(',').map(i => parseInt(i.trim()))
+      emit('citation-click', indices)
+    }
+  }
+}
 
 /**
  * 修复 Markdown 表格中非法的对齐分隔符
@@ -237,5 +262,29 @@ function fixMarkdownTable(content: string): string {
 
 .markdown-body :deep(p:last-child) {
   margin-bottom: 0;
+}
+
+.markdown-body :deep(.citation-badge) {
+  display: inline-block;
+  background-color: #e3f2fd;
+  color: #1976d2;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 0 2px;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.markdown-body :deep(.citation-badge:hover) {
+  background-color: #bbdefb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(25, 118, 210, 0.2);
+}
+
+.markdown-body :deep(.citation-badge:active) {
+  transform: translateY(0);
 }
 </style>

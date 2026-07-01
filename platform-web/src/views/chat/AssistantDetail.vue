@@ -139,6 +139,8 @@
                 <template v-else>
                   <MarkdownRenderer
                     :content="msg.content"
+                    :citations="(msg as any).citations"
+                    @citation-click="handleCitationClick"
                     class="markdown-preview"
                   />
                   <span v-if="(msg as any).streaming" class="typing-cursor">|</span>
@@ -444,6 +446,13 @@
         </n-button>
       </template>
     </n-modal>
+
+    <!-- 引用来源侧边栏 -->
+    <CitationPanel
+      :visible="showCitationPanel"
+      :citations="selectedCitations"
+      @close="showCitationPanel = false"
+    />
   </div>
 </template>
 
@@ -489,6 +498,7 @@ import { knowledgeBaseApi } from '@/api/knowledgeBase'
 import type { ChatAssistant, ChatSession, ChatMessage, KnowledgeBase } from '@/types'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import ProcessTracePanel from '@/components/ProcessTracePanel.vue'
+import CitationPanel from '@/components/CitationPanel.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -665,14 +675,26 @@ const loadMessages = async (sessionId: string) => {
     const res = await chatApi.getMessages(sessionId)
     const loadedMessages = res.data
 
-    // 解析历史消息中的过程步骤（JSON字符串 -> ProcessStep数组）
+    // 解析历史消息中的过程步骤和引用信息（JSON字符串 -> 对象数组）
     const parsedMessages = loadedMessages.map(msg => {
-      if (msg.role === 'ASSISTANT' && msg.processSteps && typeof msg.processSteps === 'string') {
-        try {
-          msg.processSteps = JSON.parse(msg.processSteps)
-        } catch (e) {
-          console.error('解析过程步骤失败:', e)
-          msg.processSteps = []
+      if (msg.role === 'ASSISTANT') {
+        // 解析过程步骤
+        if (msg.processSteps && typeof msg.processSteps === 'string') {
+          try {
+            msg.processSteps = JSON.parse(msg.processSteps)
+          } catch (e) {
+            console.error('解析过程步骤失败:', e)
+            msg.processSteps = []
+          }
+        }
+        // 解析引用信息
+        if (msg.citations && typeof msg.citations === 'string') {
+          try {
+            msg.citations = JSON.parse(msg.citations)
+          } catch (e) {
+            console.error('解析引用信息失败:', e)
+            msg.citations = []
+          }
         }
       }
       return msg
@@ -948,6 +970,17 @@ const handleSend = async () => {
       }
     })
 
+    // 处理引用信息事件
+    eventSource.addEventListener('citations', (event) => {
+      try {
+        const citations = JSON.parse(event.data)
+        assistantMessage.citations = citations
+        messages.value = [...messages.value]
+      } catch (e) {
+        console.error('解析引用信息事件失败:', e)
+      }
+    })
+
     // 处理完成事件
     eventSource.addEventListener('done', (event) => {
       try {
@@ -1008,6 +1041,20 @@ const handleKeyDown = (e: KeyboardEvent) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault()
     handleSend()
+  }
+}
+
+// 处理引用点击
+const showCitationPanel = ref(false)
+const selectedCitations = ref<any[]>([])
+
+const handleCitationClick = (indices: number[]) => {
+  // 从当前消息中获取对应的引用数据
+  const lastAssistantMessage = [...messages.value].reverse().find(msg => msg.role === 'ASSISTANT' && (msg as any).citations)
+  if (lastAssistantMessage && (lastAssistantMessage as any).citations) {
+    const citations = (lastAssistantMessage as any).citations
+    selectedCitations.value = citations.filter((c: any) => indices.includes(c.index))
+    showCitationPanel.value = true
   }
 }
 

@@ -41,7 +41,7 @@
             {{ step.content }}
           </div>
           <div v-if="step.content && step.type === 'ERROR'" class="step-detail step-error-detail">
-            {{ step.content }}
+<!--            {{ step.content }}-->
           </div>
           <div v-if="step.type === 'TOOL_CALL_START' && step.input" class="step-detail">
             <pre class="tool-json-input">{{ formatToolInput(step.input) }}</pre>

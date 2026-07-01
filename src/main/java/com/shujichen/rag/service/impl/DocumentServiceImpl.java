@@ -350,6 +350,16 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document>
         return vectorStoreService.searchSimilar(knowledgeBase, query, topK);
     }
 
+    @Override
+    public List<DocumentChunk> getChunksByIds(List<Long> chunkIds) {
+        if (chunkIds == null || chunkIds.isEmpty()) {
+            return List.of();
+        }
+        LambdaQueryWrapper<DocumentChunk> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(DocumentChunk::getId, chunkIds);
+        return documentChunkMapper.selectList(queryWrapper);
+    }
+
     private String getDocTypeFromFilename(String filename) {
         if (filename == null || !filename.contains(".")) {
             return "TXT";

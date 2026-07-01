@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shujichen.rag.common.dto.assistant.ChatAssistantDTO;
+import com.shujichen.rag.common.dto.chat.CitationDTO;
 import com.shujichen.rag.common.dto.chat.ProcessStepDTO;
 import com.shujichen.rag.common.dto.chat.StreamDoneDTO;
 import com.shujichen.rag.common.dto.chat.StreamMessageDTO;
@@ -35,9 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -332,7 +331,13 @@ public class ChatServiceImpl implements ChatService {
         // 捕获当前用户ID，传递给工具执行线程
         Long currentUserId = StpUtil.getLoginIdAsLong();
 
-        Flux<ServerSentEvent<String>> contentStream = doStreamChatWithSteps(sessionId, userMessage, systemPrompt, topN, finalModelId, knowledgeBase, historyMessages, assistant, currentUserId)
+        // 调用流式对话，获取事件流和引用信息
+        List<CitationDTO> allCitations = new ArrayList<>();
+        Map.Entry<Flux<ServerSentEvent<String>>, List<CitationDTO>> result = doStreamChatWithSteps(sessionId, userMessage, systemPrompt, topN, finalModelId, knowledgeBase, historyMessages, assistant, currentUserId);
+        Flux<ServerSentEvent<String>> baseStream = result.getKey();
+        allCitations.addAll(result.getValue());
+
+        Flux<ServerSentEvent<String>> contentStream = baseStream
                 .doOnNext(sse -> {
                     // 提取 message 事件中的内容用于保存
                     if ("message".equals(sse.event())) {
@@ -350,6 +355,7 @@ public class ChatServiceImpl implements ChatService {
                         } catch (Exception ignored) {
                         }
                     }
+                    // citations 事件已在 doStreamChatWithSteps 返回值中，无需重复收集
                 });
 
         // 完成后发送 done 事件（先保存消息获取ID）
@@ -367,6 +373,11 @@ public class ChatServiceImpl implements ChatService {
                 if (!allProcessSteps.isEmpty()) {
                     String processStepsJson = objectMapper.writeValueAsString(allProcessSteps);
                     assistantMsg.setProcessSteps(processStepsJson);
+                }
+
+                if (!allCitations.isEmpty()) {
+                    String citationsJson = objectMapper.writeValueAsString(allCitations);
+                    assistantMsg.setCitations(citationsJson);
                 }
 
                 assistantMsg.setCreatedAt(LocalDateTime.now());
@@ -396,8 +407,9 @@ public class ChatServiceImpl implements ChatService {
     /**
      * 执行流式对话，返回内容 token 流。
      * 检索步骤通过 retrieveStepEvents 发出，与内容流拼接。
+     * 返回 Pair<Flux, List<CitationDTO>>，其中 Flux 是 SSE 事件流，List<CitationDTO> 是引用信息列表
      */
-    private Flux<ServerSentEvent<String>> doStreamChatWithSteps(
+    private Map.Entry<Flux<ServerSentEvent<String>>, List<CitationDTO>> doStreamChatWithSteps(
             Long sessionId,
             String currentMessage,
             String systemPrompt,
@@ -432,7 +444,10 @@ public class ChatServiceImpl implements ChatService {
             // 如果没有关联知识库，直接进行普通聊天
             if (knowledgeBase == null) {
                 log.info("未关联知识库，使用普通聊天模式（带记忆），conversationId: {}", conversationId);
-                return doStreamContent(chatClient, systemPrompt, currentMessage, historyMessages, toolEventsSink, userId);
+                return new AbstractMap.SimpleEntry<>(
+                    doStreamContent(chatClient, systemPrompt, currentMessage, historyMessages, toolEventsSink, userId),
+                    new ArrayList<>()
+                );
             }
 
             // 获取知识库对应的 VectorStore
@@ -440,7 +455,10 @@ public class ChatServiceImpl implements ChatService {
             if (vectorStore == null) {
                 log.warn("VectorStore 不可用，collection: {}，将使用普通聊天模式",
                         knowledgeBase.getCollectionsName());
-                return doStreamContent(chatClient, systemPrompt, currentMessage, historyMessages, toolEventsSink, userId);
+                return new AbstractMap.SimpleEntry<>(
+                    doStreamContent(chatClient, systemPrompt, currentMessage, historyMessages, toolEventsSink, userId),
+                    new ArrayList<>()
+                );
             }
 
             // RAG 检索过程
@@ -467,8 +485,10 @@ public class ChatServiceImpl implements ChatService {
             long retrieveElapsed = System.currentTimeMillis() - retrieveStart;
             log.info("【RAG】检索到 {} 条相关文档, 耗时 {}ms", retrievedDocs.size(), retrieveElapsed);
 
-            // 只有检索到相关文档时才发送检索步骤
-            Flux<ServerSentEvent<String>> retrieveEvents;
+            // 只有检索到相关文档时才发送检索步骤和引用信息
+            Flux<ServerSentEvent<String>> retrieveEvents = Flux.just();
+            List<CitationDTO> citationsList = new ArrayList<>();
+
             if (!retrievedDocs.isEmpty()) {
                 // 发送 RETRIEVE_END
                 ProcessStepDTO retrieveEndStep = ProcessStepDTO.builder()
@@ -479,36 +499,78 @@ public class ChatServiceImpl implements ChatService {
                         .timestamp(System.currentTimeMillis())
                         .build();
 
-                retrieveEvents = Flux.just(
-                        createStepSse(retrieveStartStep),
-                        createStepSse(retrieveEndStep)
-                );
-            } else {
-                // 知识库中未检索到相关文档，发送错误步骤
-                ProcessStepDTO emptyStep = ProcessStepDTO.builder()
-                        .type("ERROR")
-                        .label("知识库无相关内容")
-                        .content("知识库中未检索到与问题相关的文档，将使用模型自身知识回答")
-                        .elapsedMs(retrieveElapsed)
-                        .timestamp(System.currentTimeMillis())
+                // 构造引用信息列表（去重，只存简述信息）
+                Set<String> addedChunkIds = new HashSet<>();
+                int citationIndex = 1;
+                for (int i = 0; i < retrievedDocs.size(); i++) {
+                    Document doc = retrievedDocs.get(i);
+                    Map<String, Object> metadata = doc.getMetadata() != null ? doc.getMetadata() : new HashMap<>();
+
+                    // 从metadata中提取字段，尝试多种可能的key
+                    String docId = extractMetadataField(metadata, "docId", "documentId", "doc_id");
+                    String docName = extractMetadataField(metadata, "docName", "documentName", "title", "name");
+                    String chunkId = extractMetadataField(metadata, "chunkId", "chunk_id", "id");
+
+                    // 如果chunkId为空，使用doc.getId()
+                    if (chunkId == null || chunkId.isEmpty()) {
+                        chunkId = doc.getId();
+                    }
+
+                    // 去重：同一个chunkId只添加一次
+                    if (chunkId != null && !addedChunkIds.contains(chunkId)) {
+                        addedChunkIds.add(chunkId);
+
+                        // 提取简述信息：标题 + 前200字符
+                        String fullContent = doc.getText();
+                        String preview = generatePreview(fullContent, docName);
+
+                        CitationDTO citation = CitationDTO.builder()
+                                .index(citationIndex++)
+                                .docId(docId)
+                                .docName(docName)
+                                .preview(preview)
+                                .score(doc.getScore() != null ? doc.getScore() : 0.0)
+                                .chunkId(chunkId)
+                                .knowledgeBaseId(knowledgeBase.getId())
+                                .build();
+                        citationsList.add(citation);
+                    }
+                }
+
+                // 构造 citations SSE 事件
+                ServerSentEvent<String> citationsEvent = ServerSentEvent.<String>builder()
+                        .event("citations")
+                        .data(objectMapper.writeValueAsString(citationsList))
                         .build();
+
                 retrieveEvents = Flux.just(
                         createStepSse(retrieveStartStep),
-                        createStepSse(emptyStep)
+                        createStepSse(retrieveEndStep),
+                        citationsEvent
                 );
-                log.info("【RAG】未检索到相关文档，发送 ERROR 步骤");
             }
 
             // 构建带RAG上下文的用户消息
             String userMessageWithContext;
             if (!retrievedDocs.isEmpty()) {
                 StringBuilder context = new StringBuilder();
-                context.append("以下是知识库中检索到的参考资料：\n\n");
+                context.append("以下是知识库中检索到的参考资料（每份资料前有编号 [N]）：\n\n");
                 for (int i = 0; i < retrievedDocs.size(); i++) {
                     Document doc = retrievedDocs.get(i);
-                    context.append("--- 参考资料 ").append(i + 1).append(" ---\n");
+                    context.append("[参考资料 ").append(i + 1).append("]\n");
                     context.append(doc.getText()).append("\n\n");
                 }
+                context.append("## 引用要求\n");
+                context.append("在回答中，基于参考资料得出的结论需要标注引用编号，格式为 [N]，多来源用 [N,M]。\n");
+                context.append("示例：'Python 是一种解释型语言[1]，支持多种编程范式[2]。'\n");
+                context.append("规则：\n");
+                context.append("1. 在段落或句子末尾标注引用，不要每行都标注\n");
+                context.append("2. 表格内容只需在表格开头或结尾标注一次引用，表格内不要标注\n");
+                context.append("3. 列表内容只需在列表开头或结尾标注一次引用，列表项内不要标注\n");
+                context.append("4. 引用标记放在句号、逗号之前\n");
+                context.append("5. 多个来源用 [1,2] 格式\n");
+                context.append("6. 不要编造参考资料中不存在的内容\n");
+                context.append("7. 如果回答完全不依赖参考资料（如闲聊），则不添加引用标记\n\n");
                 context.append("请优先使用以上参考资料回答问题。如果参考资料不足以回答，使用可用的工具来获取信息。\n\n");
                 context.append("用户问题：").append(currentMessage);
                 userMessageWithContext = context.toString();
@@ -520,11 +582,12 @@ public class ChatServiceImpl implements ChatService {
             Flux<ServerSentEvent<String>> contentEvents = doStreamContent(
                     chatClient, systemPrompt, userMessageWithContext, historyMessages, toolEventsSink, userId);
 
-            return retrieveEvents.concatWith(contentEvents);
+            Flux<ServerSentEvent<String>> resultFlux = retrieveEvents.concatWith(contentEvents);
+            return new AbstractMap.SimpleEntry<>(resultFlux, citationsList);
 
         } catch (Exception e) {
             log.error("流式对话失败", e);
-            return Flux.error(e);
+            return new AbstractMap.SimpleEntry<>(Flux.error(e), new ArrayList<>());
         }
     }
 
@@ -617,5 +680,47 @@ public class ChatServiceImpl implements ChatService {
                 .event("close")
                 .data("")
                 .build();
+    }
+
+    /**
+     * 从metadata中提取字段，尝试多个可能的key
+     */
+    private String extractMetadataField(Map<String, Object> metadata, String... keys) {
+        for (String key : keys) {
+            Object value = metadata.get(key);
+            if (value != null) {
+                return value.toString();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 生成简述信息：标题 + 前200字符
+     */
+    private String generatePreview(String fullContent, String docName) {
+        if (fullContent == null || fullContent.isEmpty()) {
+            return docName != null ? docName : "";
+        }
+
+        // 提取标题（第一行）
+        String title = "";
+        String[] lines = fullContent.split("\n");
+        if (lines.length > 0) {
+            title = lines[0].trim();
+            // 移除Markdown标题标记
+            title = title.replaceAll("^#+\\s*", "");
+        }
+
+        // 提取前200字符作为摘要
+        String content = fullContent.length() > 200 ? fullContent.substring(0, 200) + "..." : fullContent;
+        // 移除Markdown标记
+        content = content.replaceAll("[#*`\\[\\]]", "");
+
+        if (title.isEmpty()) {
+            return content;
+        } else {
+            return title + "\n" + content;
+        }
     }
 }

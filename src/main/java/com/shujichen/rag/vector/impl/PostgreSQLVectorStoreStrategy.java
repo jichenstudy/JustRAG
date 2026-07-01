@@ -6,6 +6,7 @@ import com.shujichen.rag.entity.DocumentChunk;
 import com.shujichen.rag.entity.KnowledgeBase;
 import com.shujichen.rag.factory.EmbeddingModelFactory;
 import com.shujichen.rag.mapper.DocumentChunkMapper;
+import com.shujichen.rag.mapper.DocumentMapper;
 import com.shujichen.rag.service.AiModelConfigService;
 import com.shujichen.rag.vector.AbstractVectorStoreStrategy;
 import lombok.extern.slf4j.Slf4j;
@@ -32,15 +33,18 @@ import java.util.Map;
 public class PostgreSQLVectorStoreStrategy extends AbstractVectorStoreStrategy {
 
     private final DocumentChunkMapper documentChunkMapper;
+    private final DocumentMapper documentMapper;
     private volatile DataSource dataSource;
     private volatile JdbcTemplate jdbcTemplate;
 
     public PostgreSQLVectorStoreStrategy(VectorStoreProperties properties,
                                          EmbeddingModelFactory embeddingModelFactory,
                                          AiModelConfigService aiModelConfigService,
-                                         DocumentChunkMapper documentChunkMapper) {
+                                         DocumentChunkMapper documentChunkMapper,
+                                         DocumentMapper documentMapper) {
         super(properties, embeddingModelFactory, aiModelConfigService);
         this.documentChunkMapper = documentChunkMapper;
+        this.documentMapper = documentMapper;
     }
 
     @Override
@@ -236,13 +240,29 @@ public class PostgreSQLVectorStoreStrategy extends AbstractVectorStoreStrategy {
      * 构建 Document 列表
      */
     private List<Document> buildDocuments(Long documentId, KnowledgeBase knowledgeBase, List<DocumentChunk> chunks) {
+        String documentName = getDocumentName(documentId);
+        
         return chunks.stream().map(chunk -> {
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("documentId", documentId);
+            metadata.put("documentName", documentName);
             metadata.put("chunkId", chunk.getId());
             metadata.put("chunkIndex", chunk.getChunkIndex());
             metadata.put("knowledgeBaseId", knowledgeBase.getId());
             return new Document(String.valueOf(chunk.getId()), chunk.getContent(), metadata);
         }).toList();
+    }
+    
+    /**
+     * 获取文档名称
+     */
+    private String getDocumentName(Long documentId) {
+        try {
+            com.shujichen.rag.entity.Document document = documentMapper.selectById(documentId);
+            return document != null ? document.getName() : null;
+        } catch (Exception e) {
+            log.warn("查询文档名称失败，documentId: {}", documentId, e);
+            return null;
+        }
     }
 }

@@ -61,7 +61,11 @@ public class DynamicMcpManager {
         }
 
         // 初始化连接
-        client.initialize();
+        try {
+            client.initialize();
+        } catch (Exception e) {
+            log.warn("MCP服务注册失败: {}", config.getName(), e);
+        }
 
         // 注册到Map
         mcpRegistry.put(config.getName(), client);

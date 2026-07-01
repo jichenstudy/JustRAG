@@ -121,4 +121,12 @@ public interface DocumentService extends IService<Document> {
      * @return 相似度搜索结果
      */
     List<org.springframework.ai.document.Document> searchSimilar(Long knowledgeBaseId, String query, int topK);
+
+    /**
+     * 根据分片IDs批量查询分块详情
+     *
+     * @param chunkIds 分片ID列表
+     * @return 文档分块列表
+     */
+    List<DocumentChunk> getChunksByIds(List<Long> chunkIds);
 }

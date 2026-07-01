@@ -154,6 +154,7 @@ export interface ChatMessage {
   content: string
   createdAt: string
   processSteps?: ProcessStep[]
+  citations?: Citation[]
   totalTokens?: { prompt: number; completion: number }
   totalElapsedMs?: number
 }
@@ -173,6 +174,17 @@ export interface ProcessStep {
   elapsedMs?: number
   content?: string
   timestamp: number
+}
+
+// 引用信息类型
+export interface Citation {
+  index: number
+  docId?: string
+  docName?: string
+  preview?: string
+  score?: number
+  chunkId: string
+  knowledgeBaseId?: number
 }
 
 // 文件相关类型

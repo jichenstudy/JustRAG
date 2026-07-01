@@ -41,6 +41,11 @@ public class ChatMessage {
     private String processSteps;
 
     /**
+     * 引用信息（JSON格式，记录RAG检索的文档片段）
+     */
+    private String citations;
+
+    /**
      * 消息发送或生成时间
      */
     private LocalDateTime createdAt;

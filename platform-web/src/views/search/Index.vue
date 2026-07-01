@@ -66,7 +66,7 @@
               <span class="score">相似度: {{ (result.score * 100).toFixed(1) }}%</span>
             </div>
             <div class="result-content">
-              {{ result.content }}
+              <MarkdownRenderer :content="result.content" />
             </div>
             <div class="result-meta">
               <span>文档ID: {{ result.metadata?.documentId }}</span>
@@ -107,6 +107,7 @@ import {
   useMessage
 } from 'naive-ui'
 import { SearchOutline } from '@vicons/ionicons5'
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { useThemeStore } from '@/stores/theme'
 import { knowledgeBaseApi } from '@/api/knowledgeBase'
 import { documentApi } from '@/api/document'
@@ -282,10 +283,7 @@ onMounted(() => {
 }
 
 .result-content {
-  font-size: 15px;
-  line-height: 1.7;
   margin-bottom: 12px;
-  white-space: pre-wrap;
 }
 
 .result-meta {

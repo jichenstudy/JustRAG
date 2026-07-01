@@ -13,12 +13,12 @@ public class DocumentChunkDTO {
     /**
      * 分块ID
      */
-    private Long id;
+    private String id;
 
     /**
      * 文档ID
      */
-    private Long documentId;
+    private String documentId;
 
     /**
      * 分块内容
